@@ -1,16 +1,12 @@
 <template>
   <div id="app" class="has-background-white-ter">
-    <div class="navbar denav has-background-grey-light">
-        <h2>Description Editor</h2>
-        <a href="javascript:void(0)">Signout</a>
-    </div>
     <router-view/>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'App'
+  name: 'App',
 }
 </script>
 
@@ -19,7 +15,6 @@ export default {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-align: center;
   color: #2c3e50;
   min-height: 100vh;
 }

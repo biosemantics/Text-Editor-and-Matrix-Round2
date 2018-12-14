@@ -1,0 +1,208 @@
+$green: #B3E490;
+$gray: #F1F1F1;
+
+.button, .button:hover, .button:visited, .button:focus {
+    color: white;
+}
+.btn-red {
+    background-color: #E65343;
+}
+.btn-blue {
+    background-color: #55B1DE;
+}
+.btn-darkred {
+    background-color: #C95052;
+}
+
+
+.container {
+    padding: 50px 0px;
+}
+.p0 {
+    padding: 0!important;
+}
+.pl30 {
+    padding-left: 30px;
+}
+.mb20 {
+    margin-bottom: 20px!important;
+}
+.tabs, .tab-header {
+    margin-bottom: 0!important;
+}
+.tabs li.is-active a {
+    color: black;
+}
+.tab-header {
+    display: flex;
+    text-align: center;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding: 0 0.75rem;
+}
+.tab-content {
+    border: 1px solid #dbdbdb;
+    border-top: none;
+    min-height: 300px;
+    background-color: white!important;
+}
+.buttons-wrapper {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 20px;
+}
+.btn-formalize {
+    border-bottom: 1px solid #dbdbdb;
+    cursor: pointer;
+}
+.login-wrapper {
+    padding-top: 200px;
+    .login-form {
+        max-width: 500px;
+        margin: 0 auto;
+    }
+}
+.artboard .card-content {
+    min-height: 500px;
+    height: 500px;
+    position: relative;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    margin-bottom: 20px;
+    padding: 10px;
+    .term-item {
+        margin-bottom: 25px;
+        .notfound {
+            button {
+                background-color: $green;
+                font-size: 12px;
+                width: 100%;
+                color: black;
+            }
+        }
+        .syn {
+            text-align: right;
+            input[type="radio"] {
+                display:none;
+            }
+            label {
+                background-color: $green;
+                cursor: pointer;
+                display: inline-block;
+                padding: 3px 8px;
+                border-radius: 5px;
+                text-align: center;
+            }
+            input[type="radio"]:checked+label {
+                background-color: green;
+                color: white;
+            }
+        }
+        .def, .tree {
+            background-color: $gray;
+        }
+    }
+    .term-item-top {
+        margin-bottom: 10px;
+        display: flex;
+        .term-dot {
+            width: 20px;
+            height: 20px;
+            margin-top: 5px;
+            background-color: #F16769;
+            border-radius: 50%;
+        }
+        .term-content {
+            flex-grow: 1;
+            max-width: 310px!important;
+            padding: 0 10px;
+            .term-name {
+                background-color: #FCE6E6;
+                padding: 4px 10px;
+                border-radius: 6px;
+            }
+            .term-solution {
+                font-size: 11px;
+                flex-grow: 1;
+                text-align: left;
+            }
+        }
+        .btn-confirm {
+            max-height: 32px;
+            width: 65px;
+            background-color: #E75240;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 6px;
+            cursor: pointer;
+        }
+    }
+}
+.storage-tab {
+    nav.tabs {
+        ul {
+            li a {
+                border-top-right-radius: 20px;
+                padding: 2px 16px;
+            }
+            li:first-child a {
+                background-color: rgba(203,224,234, 0.7);
+                color: white;
+            }
+            li:first-child.is-active a {
+                background-color: #CBE0EA;
+                color: black;
+            }
+            li:nth-of-type(2) a {
+                background-color: rgba(202,227,184, 0.7);
+                color: white;
+            }
+            li:nth-of-type(2).is-active a {
+                background-color: #B1E48F;
+                color: black;
+            }
+            li:last-child a {
+                background-color: rgba(247,233,231, 0.7);
+                color: white;
+            }
+            li:last-child.is-active a {
+                background-color: #FBE5E5;
+                color: black;
+            }
+        }
+    }
+    .tab-content {
+        padding: 0;
+    }
+    .tab-item {
+        min-height: 300px;
+    }
+    .tab-item:first-child {
+        background-color: #CBE0EA;
+    }
+    .tab-item:nth-of-type(2) {
+        background-color: #B1E48F;
+    }
+    .tab-item:last-child {
+        background-color: #FBE5E5;
+    }
+}
+.ql-toolbar {
+    display: none;
+}
+.ql-container {
+    border: none!important;
+    .ql-editor p {
+        u {
+            text-decoration: none;
+            border-bottom: 2px solid #E65343;
+        }
+        u:hover {
+            background-color: rgb(252, 238, 238);
+        }
+    }
+}
+.u-hover {
+    background-color: rgb(252, 238, 238);
+}
