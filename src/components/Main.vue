@@ -71,7 +71,7 @@ export default {
         }
     },
     mounted: function() {
-        this.set_user(firebase.auth().currentUser);
+        this.SET_USER(firebase.auth().currentUser);
         this.get_tree();
         this.editor = this.$refs.editor.quill;
         this.editor.on('selection-change', (range, oldRange, source) => {
@@ -100,16 +100,16 @@ export default {
     methods: {
         ...mapActions([
             'find_qterms',
-            'set_user',
             'insert_resp_body',
             'find_definition',
             'get_tree'
         ]),
         ...mapMutations([
             'ADD_TEXT',
+            'SET_USER',
             'CLEAN_TAB_DUST',
-            'UPDATE_TEXT',
-            'UPDATE_INDEX',
+            'UPDATE_TEXT_ARRAY',
+            'UPDATE_QTERMS_INDEX',
         ]),
         check_quality() {
             const text = this.editor.getText(); // .replace(/(\r\n|\n|\r)/gm,"");
@@ -146,12 +146,12 @@ export default {
                     this.editor.removeFormat(i.pos, i.length);
                     this.editor.deleteText(i.pos, i.length);
                     this.editor.insertText(i.pos, replaceObj.syn);
-                    this.UPDATE_INDEX({
+                    this.UPDATE_QTERMS_INDEX({
                         pos: i.pos,
                         delta: replaceObj.syn.length - i.length
                     });
                 });
-                this.UPDATE_TEXT({
+                this.UPDATE_TEXT_ARRAY({
                     html: this.editorContent,
                     text: this.editor.getText()
                 });

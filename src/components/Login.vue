@@ -21,7 +21,7 @@
 <script>
 import firebase from 'firebase';
 import API from '@/network/api';
-import { mapActions } from 'vuex';
+import { mapMutations } from 'vuex';
 
 export default {
     name: 'Login',
@@ -32,14 +32,14 @@ export default {
         }
     },
     methods: {
-        ...mapActions([
-            'set_user',
+        ...mapMutations([
+            'SET_USER'
         ]),
         login() {
             firebase.auth().signInWithEmailAndPassword(this.email, this.password)
             .then(resp => {
                 // API.loginLog(this, resp.user);
-                this.set_user(resp.user);
+                this.SET_USER(resp.user);
                 this.$router.replace('/home');
             })
             .catch( error => {

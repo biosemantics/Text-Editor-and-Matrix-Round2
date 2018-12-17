@@ -42,7 +42,7 @@
                         <div class="column is-8">
                             <tree 
                                 :data="treeData"
-                                @node:selected="onNodeSelected"
+                                @node:selected="onTreeNodeSelected"
                             />
                         </div>
                     </div>
@@ -51,13 +51,13 @@
                     <div class="columns pl30 mb20" v-for="(a, j) in q.qType.alterIDs" :key="j">
                         <div class="column is-4 syn">
                             <input type="radio" 
-                                v-bind:id="getBio(a).replace(/ /g,'').toLowerCase()" 
+                                v-bind:id="getBioEntityNameOrigin(a).replace(/ /g,'').toLowerCase()" 
                                 :name="q.value" 
-                                @click="onAssocSelected(i, getBio(a))">
-                            <label v-bind:for="getBio(a).replace(/ /g,'').toLowerCase()">{{ getBio(a) }}</label>
+                                @click="onMultiAssoc(i, getBioEntityNameOrigin(a))">
+                            <label v-bind:for="getBioEntityNameOrigin(a).replace(/ /g,'').toLowerCase()">{{ getBioEntityNameOrigin(a) }}</label>
                         </div>
                         <div class="column is-8 def">
-                            {{ getRevisedSentenceByBio(a, q) }}
+                            {{ getRevisedSentenceByBioID(a, q) }}
                         </div>
                     </div>
                 </div>
@@ -74,7 +74,7 @@
                     </b-field>
                 </section>
                 <footer class="modal-card-foot">
-                    <button class="button is-info" type="button" @click="onSubmitDef">Submit</button>
+                    <button class="button is-info" type="button" @click="onSubmitDefinition">Submit</button>
                 </footer>
             </div>
         </b-modal>
@@ -111,14 +111,12 @@ export default {
         openEditTermModal: false
     }),
     methods: {
-        ...mapActions([
-            'set_replace_array'
-        ]),
         ...mapMutations([
-            'UPDATE_TERM'
+            'UPDATE_TERM',
+            'READY_TO_REPLACE'
         ]),
         setScroll(nth) {
-            console.log(document.querySelector('.terms-list .term-item:nth-child('+(nth+1)+')').offsetTop);
+            // console.log(document.querySelector('.terms-list .term-item:nth-child('+(nth+1)+')').offsetTop);
             this.$refs.termsList.scrollTop = document.querySelector('.terms-list .term-item:nth-child('+(nth+1)+')').offsetTop;
         },
         termSolution(qterm) {
@@ -137,36 +135,32 @@ export default {
                 return obj.def;
             return '';
         },
-        onNodeSelected(node) {
+        onTreeNodeSelected(node) {
             const syncaseDOM = node.vm.$el.closest('.syn-case');
             if (syncaseDOM.querySelector('input[type="radio"]:checked'))
                 syncaseDOM.querySelector('input[type="radio"]:checked').checked = false;
-            this.set_replace_array({
+            this.READY_TO_REPLACE({
                 qindex: syncaseDOM.dataset.qtypeId, 
                 syn: node.text
             });
         },
         onSynonymSelected(qindex, matchingTerm) {
-            this.set_replace_array({
+            this.READY_TO_REPLACE({
                 qindex, 
                 syn: matchingTerm
             });
         },
-        onAssocSelected(qindex, matchingTerm) {
+        onMultiAssoc(qindex, matchingTerm) {
             console.log('coming soon');
         },
         onConfirm(qindex) {
             this.$emit('confirm', qindex);
         },
-        getBio(bio_id) {
-            const bio = this.bios.find(b => b.id == bio_id);
-            if (bio) {
-                return bio.nameOrigin;
-            } else
-                return '';
+        getBioEntityNameOrigin(bioID) {
+            return this.$store.getters.bioEntityNameOrigin(bioID);
         },
-        getRevisedSentenceByBio(bio_id, q) {
-            const bio = this.bios.find(b => b.id == bio_id);
+        getRevisedSentenceByBioID(bioID, q) {
+            const bio = this.bios.find(b => b.id == bioID);
             const statement = this.statements.find(s => s.id == bio.statementID);
             let text = statement.text;
             const pos = text.indexOf(q.value);
@@ -183,7 +177,7 @@ export default {
             this.termToEdit.definition = '';
             this.openEditTermModal = true;
         },
-        onSubmitDef() {
+        onSubmitDefinition() {
             this.openEditTermModal = false;
             axios.defineTerm(this.termToEdit).then(resp => {
                 if (resp.data == "SUCCESSFULLY") {

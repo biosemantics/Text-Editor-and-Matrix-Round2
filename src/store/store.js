@@ -21,7 +21,6 @@ export const store = new Vuex.Store({
     },
     getters: {
         statementByBioID: (state) => bioID => {
-            console.log(bioID);
             const bio = state.bios.find(b => b.id==bioID);
             if (bio) {
                 const statement = state.statements.find(s => s.id ==bio.statementID);
@@ -29,6 +28,13 @@ export const store = new Vuex.Store({
                     return statement.text;
             }
             return '';
+        },
+        bioEntityNameOrigin: (state) => bioID => {
+            const bio = state.bios.find(b => b.id == bio_id);
+            if (bio) {
+                return bio.nameOrigin;
+            } else
+                return '';
         }
     },
     mutations: {
@@ -57,12 +63,12 @@ export const store = new Vuex.Store({
                 text: text
             });
         },
-        UPDATE_TEXT: (state, {html, text}) => {
+        UPDATE_TEXT_ARRAY: (state, {html, text}) => {
             const t = state.texts.find(t => t.tabID == state.activeTabIndex);
             t.html = html;
             t.text = text;
         },
-        UPDATE_INDEX: (state, {pos, delta}) => {
+        UPDATE_QTERMS_INDEX: (state, {pos, delta}) => {
             state.qterms.forEach(q => {
                 q.index.forEach(qi => {
                     if (qi.pos > pos)
@@ -74,6 +80,14 @@ export const store = new Vuex.Store({
             const od = state.ontologyDefArray.find(o => o.term == term);
             if (od) {
                 od.def = def;
+            }
+        },
+        READY_TO_REPLACE({state}, replaceObj) {
+            let replace = state.replaceArray.find(r => r.qindex==replaceObj.qindex);
+            if (replace === undefined) {
+                state.replaceArray.push(replaceObj);
+            } else {
+                replace.syn = replaceObj.syn;
             }
         }
     }, 
@@ -210,16 +224,5 @@ export const store = new Vuex.Store({
                 state.treeData = res.data;
             });
         },
-        set_user: ({commit}, user) => {
-            commit("SET_USER", user);
-        },
-        set_replace_array({state}, replaceObj) {
-            let replace = state.replaceArray.find(r => r.qindex==replaceObj.qindex);
-            if (replace === undefined) {
-                state.replaceArray.push(replaceObj);
-            } else {
-                replace.syn = replaceObj.syn;
-            }
-        }
     }
 });
