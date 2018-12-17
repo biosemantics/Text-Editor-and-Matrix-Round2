@@ -19,6 +19,18 @@ export const store = new Vuex.Store({
         treeData: {},
         replaceArray: [],
     },
+    getters: {
+        statementByBioID: (state) => bioID => {
+            console.log(bioID);
+            const bio = state.bios.find(b => b.id==bioID);
+            if (bio) {
+                const statement = state.statements.find(s => s.id ==bio.statementID);
+                if (statement) 
+                    return statement.text;
+            }
+            return '';
+        }
+    },
     mutations: {
         SET_USER: (state, user) => {
             const username = user.email.split('@')[0];
@@ -50,12 +62,19 @@ export const store = new Vuex.Store({
             t.html = html;
             t.text = text;
         },
-        UPDATE_INDEX: (state, delta) => {
+        UPDATE_INDEX: (state, {pos, delta}) => {
             state.qterms.forEach(q => {
                 q.index.forEach(qi => {
-                    qi.pos += delta;
+                    if (qi.pos > pos)
+                        qi.pos += delta;
                 });
             });
+        },
+        UPDATE_TERM: (state, {term, def}) => {
+            const od = state.ontologyDefArray.find(o => o.term == term);
+            if (od) {
+                od.def = def;
+            }
         }
     }, 
     actions: {
@@ -117,7 +136,7 @@ export const store = new Vuex.Store({
         find_qterms: ({state}) => {
             const text = state.texts.find(t => t.tabID == state.activeTabIndex).text.toLowerCase();
             state.bios.forEach(bio => {
-                const qType = getQType(bio.ontology, bio.notes);
+                const qType = getQType(bio.ontology, bio.notes, bio.id);
                 if (qType.length > 0) {
                     qType.forEach(qt => {
                         state.qterms.push({
@@ -132,7 +151,7 @@ export const store = new Vuex.Store({
                 }
             });
             state.characters.forEach(c => {
-                const qType = getQType(c.ontology, c.notes);
+                const qType = getQType(c.ontology, c.notes, c.bioID);
                 if (qType.length > 0) {
                     qType.forEach(qt => {
                         const cvalueArray = typeof c.value==="string" ? [c.value] : c.value;

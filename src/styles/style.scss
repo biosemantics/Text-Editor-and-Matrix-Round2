@@ -62,6 +62,14 @@ $gray: #F1F1F1;
         margin: 0 auto;
     }
 }
+.modal {
+    .animation-content {
+        width: 50%;
+    }
+    .modal-card-foot {
+        justify-content: flex-end;
+    }
+}
 .artboard .card-content {
     min-height: 500px;
     height: 500px;
@@ -193,13 +201,16 @@ $gray: #F1F1F1;
 }
 .ql-container {
     border: none!important;
-    .ql-editor p {
-        u {
-            text-decoration: none;
-            border-bottom: 2px solid #E65343;
-        }
-        u:hover {
-            background-color: rgb(252, 238, 238);
+    .ql-editor {
+        min-height: 765px;
+        p {
+            u {
+                text-decoration: none;
+                border-bottom: 2px solid #E65343;
+            }
+            u:hover {
+                background-color: rgb(252, 238, 238);
+            }
         }
     }
 }

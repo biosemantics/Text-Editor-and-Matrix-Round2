@@ -44,7 +44,7 @@ export function findAllIndex(heap, needle) {
     return arrayIndex;
 }
 
-export function getQType(ontology, notes) {
+export function getQType(ontology, notes, bioID) {
     let qtype = [];
     if (!ontology) {
         qtype.push({type: 'notfound'});
@@ -73,10 +73,12 @@ export function getQType(ontology, notes) {
         }
     }
     if (!!notes) {
-        const alterIDs = notes.split(/\s?:\s?/)[1];
+        const alterIDsString = notes.split(/\s?:\s?/)[1];
+        let alterIDs = alterIDsString.split(/\s?;\s?/);
+        alterIDs.unshift(bioID);
         qtype.push({
             type: 'multi_assoc', 
-            alterIDs: alterIDs.split(/\s?;\s?/)
+            alterIDs
         });
     }
     return qtype;

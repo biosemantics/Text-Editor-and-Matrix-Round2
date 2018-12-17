@@ -141,21 +141,21 @@ export default {
         },
         confirm(qindex) {
             const replaceObj = this.replaceArray.find(r => r.qindex == qindex);
-            if (replaceObj !== undefined) {
-                let delta = 0;
-                if (this.qterms[qindex].index)
-                    delta = replaceObj.syn.length - this.qterms[qindex].index[0].length;
+            if (replaceObj !== undefined && this.qterms[qindex] != null) {
                 this.qterms[qindex].index.forEach(i => {
                     this.editor.removeFormat(i.pos, i.length);
                     this.editor.deleteText(i.pos, i.length);
                     this.editor.insertText(i.pos, replaceObj.syn);
+                    this.UPDATE_INDEX({
+                        pos: i.pos,
+                        delta: replaceObj.syn.length - i.length
+                    });
                 });
                 this.UPDATE_TEXT({
                     html: this.editorContent,
                     text: this.editor.getText()
                 });
                 this.qterms.splice(qindex, 1);
-                this.UPDATE_INDEX(delta);
             }
         },
         signout() {

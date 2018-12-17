@@ -10,5 +10,8 @@ export default {
     },
     getTree: function(ontologyKind='carex') {
         return axios.get(CONF.apiUrl + ontologyKind + '/getTree');
+    },
+    defineTerm: function(reqBody) {
+        return axios.post(CONF.apiUrl + 'definition', reqBody);
     }
 }

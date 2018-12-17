@@ -31,7 +31,7 @@
                                 @click="onSynonymSelected(i, o.matchingTerm)">
                             <label v-bind:for="o.matchingTerm.replace(/ /g,'').toLowerCase()">{{ o.matchingTerm }}</label>
                         </div>
-                        <div class="column is-8 def">
+                        <div class="column is-8 def" @click="onDefine(o, q.bioID)">
                             {{ termDefinition(o.matchingTerm)  }}
                         </div>
                     </div>
@@ -53,21 +53,37 @@
                             <input type="radio" 
                                 v-bind:id="getBio(a).replace(/ /g,'').toLowerCase()" 
                                 :name="q.value" 
-                                @click="onSynonymSelected(i, getBio(a))">
+                                @click="onAssocSelected(i, getBio(a))">
                             <label v-bind:for="getBio(a).replace(/ /g,'').toLowerCase()">{{ getBio(a) }}</label>
                         </div>
                         <div class="column is-8 def">
-                            {{ getRevisedSentenceByBio(a) }}
+                            {{ getRevisedSentenceByBio(a, q) }}
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+        <b-modal :active.sync="openEditTermModal">
+            <div class="modal-card" style="width: auto">
+                <header class="modal-card-head">
+                    <p class="modal-card-title">{{ matchingTermToEdit }}</p>
+                </header>
+                <section class="modal-card-body">
+                    <b-field label="Definition">
+                        <b-input maxlength="200" type="textarea" v-model="termToEdit.definition"></b-input>
+                    </b-field>
+                </section>
+                <footer class="modal-card-foot">
+                    <button class="button is-info" type="button" @click="onSubmitDef">Submit</button>
+                </footer>
+            </div>
+        </b-modal>
     </div>
 </template>
 
 <script>
-import { mapState, mapMutations, mapActions } from 'vuex';
+import { mapState, mapActions, mapMutations } from 'vuex';
+import axios from '@/network/axios';
 
 export default {
     name: 'art-board',
@@ -82,9 +98,24 @@ export default {
             'treeData'
         ]),
     },
+    data: () => ({
+        termToEdit: {
+            user: '',
+            ontology: '',
+            definition: '',
+            providedBy: 'hongcui',
+            exampleSentence: '',
+            classIRI: ''
+        },
+        matchingTermToEdit: '',
+        openEditTermModal: false
+    }),
     methods: {
         ...mapActions([
             'set_replace_array'
+        ]),
+        ...mapMutations([
+            'UPDATE_TERM'
         ]),
         setScroll(nth) {
             console.log(document.querySelector('.terms-list .term-item:nth-child('+(nth+1)+')').offsetTop);
@@ -114,16 +145,15 @@ export default {
                 qindex: syncaseDOM.dataset.qtypeId, 
                 syn: node.text
             });
-            // console.log('qtype id: ',syncaseDOM.dataset.qtypeId);
-            // console.log(node.vm.$el.closest('.syn-case'));
         },
         onSynonymSelected(qindex, matchingTerm) {
-            // console.log('qterm index', qindex);
-            // console.log('matching term', matchingTerm);
             this.set_replace_array({
                 qindex, 
                 syn: matchingTerm
             });
+        },
+        onAssocSelected(qindex, matchingTerm) {
+            console.log('coming soon');
         },
         onConfirm(qindex) {
             this.$emit('confirm', qindex);
@@ -135,14 +165,36 @@ export default {
             } else
                 return '';
         },
-        getRevisedSentenceByBio(bio_id, qvalue) {
-            /* const jsUcfirst = function(string) {
-                return string.charAt(0).toUpperCase() + string.slice(1);
-            } */
+        getRevisedSentenceByBio(bio_id, q) {
             const bio = this.bios.find(b => b.id == bio_id);
             const statement = this.statements.find(s => s.id == bio.statementID);
-            const newSt = statement.text.replace(qvalue, bio.nameOrigin);
-            return newSt;//jsUcfirst(newSt);
+            let text = statement.text;
+            const pos = text.indexOf(q.value);
+            text = text.slice(0, pos) + bio.nameOrigin + ' ' + text.slice(pos);
+            return text;
+        },
+        onDefine(ontology, bioID) {
+            const def = this.termDefinition(ontology.matchingTerm);
+            this.matchingTermToEdit = ontology.matchingTerm;
+            this.termToEdit.ontology = "carex";
+            this.termToEdit.user = "";
+            this.termToEdit.exampleSentence = this.$store.getters.statementByBioID(bioID);
+            this.termToEdit.classIRI = ontology.ontologyID;
+            this.termToEdit.definition = '';
+            this.openEditTermModal = true;
+        },
+        onSubmitDef() {
+            this.openEditTermModal = false;
+            axios.defineTerm(this.termToEdit).then(resp => {
+                if (resp.data == "SUCCESSFULLY") {
+                    this.UPDATE_TERM({
+                        term: this.matchingTermToEdit,
+                        def: this.termToEdit.definition
+                    });
+                }
+            }).catch(error => {
+                console.log(error);
+            })
         }
     }
 }
