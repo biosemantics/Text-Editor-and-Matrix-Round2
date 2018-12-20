@@ -1,22 +1,58 @@
-$green: #B3E490;
+$green-light: #ADE589;
+$green: #3A8C05;
+$green-dark: #307006;
+$red: #ED553F;
+$pink-light: #F8E9E7;
+$pink: #FDE5E5;
+$cyan-light: #C9E0EB;
+$cyan: #48AFE0;
 $gray: #F1F1F1;
+$gray-dark: #707070;
+
 
 .button, .button:hover, .button:visited, .button:focus {
     color: white;
 }
-.btn-red {
-    background-color: #E65343;
+.bk-red {
+    background-color: $red;
 }
-.btn-blue {
-    background-color: #55B1DE;
+.bk-cyan {
+    background-color: $cyan;
 }
-.btn-darkred {
-    background-color: #C95052;
+.bk-green-light {
+    background-color: $green-light;
+}
+.bk-gray-dark {
+    background-color: $gray-dark;
 }
 
+html {
+    background-color: #F7F7F7;
+}
+#app {
+    font-family: 'Avenir', Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color: black;
+}
+.denav {
+    background-color: #c7c7c7;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 30px;
+}
+a, a:hover, a:visited, a:active, a:focus {
+    text-decoration: none;
+    color: black;
+}
+.main-wrapper {
+    margin: 20px 100px;
+    background-color: #E7E7E7;
+}
 
 .container {
-    padding: 50px 0px;
+    padding: 22px 0px;
 }
 .p0 {
     padding: 0!important;
@@ -26,6 +62,50 @@ $gray: #F1F1F1;
 }
 .mb20 {
     margin-bottom: 20px!important;
+}
+.section-table {
+    padding: 20px;
+    table {
+        border: 1px solid #D9D9D9!important;
+        tr:not(.is-selected):nth-child(even) {
+            background-color: #F1F1F1!important;
+        }
+        .chevron-cell {
+            padding: 4px 10px;
+        }
+        th {
+            background-color: #D9D9D9;
+        }
+        td, th {
+            border: 2px solid white!important;
+            vertical-align: middle;
+        }
+        td {
+            padding: 0px 12px;
+        }
+        .col-controls {
+            > span {
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+            }
+        }
+        th:nth-child(2) > .th-wrap {
+            display: flex;
+            justify-content: space-between;
+        }
+        span.icon {
+            cursor: pointer;
+            i {
+                font-size: 20px;
+            }
+        }
+        tr.detail {
+            .detail-container {
+                padding: 0px 16px!important;
+            }
+        }
+    }
 }
 .tabs, .tab-header {
     margin-bottom: 0!important;
@@ -40,10 +120,22 @@ $gray: #F1F1F1;
     align-items: flex-end;
     padding: 0 0.75rem;
 }
+.detab li {
+    background-color: #D8D8D8;
+    span {
+        color: #A8A4A4;
+    }
+}
+.detab li.is-active {
+    background-color: white;
+    span {
+        color: black;
+    }
+}
+
 .tab-content {
     border: 1px solid #dbdbdb;
     border-top: none;
-    min-height: 300px;
     background-color: white!important;
 }
 .buttons-wrapper {
@@ -70,80 +162,115 @@ $gray: #F1F1F1;
         justify-content: flex-end;
     }
 }
-.artboard .card-content {
-    min-height: 500px;
-    height: 500px;
-    position: relative;
-    overflow-y: scroll;
-    overflow-x: hidden;
-    margin-bottom: 20px;
-    padding: 10px;
-    .term-item {
-        margin-bottom: 25px;
-        .notfound {
-            button {
-                background-color: $green;
-                font-size: 12px;
-                width: 100%;
-                color: black;
-            }
-        }
-        .syn {
-            text-align: right;
-            input[type="radio"] {
-                display:none;
-            }
-            label {
-                background-color: $green;
-                cursor: pointer;
-                display: inline-block;
-                padding: 3px 8px;
-                border-radius: 5px;
-                text-align: center;
-            }
-            input[type="radio"]:checked+label {
-                background-color: green;
-                color: white;
-            }
-        }
-        .def, .tree {
-            background-color: $gray;
-        }
+.main-de-content {
+    min-height: calc(100vh - 280px);
+}
+.artboard {
+    .card-header {
+        background-color: #D8D8D8;
+        color: black;
+        font-size: 18px;
     }
-    .term-item-top {
-        margin-bottom: 10px;
-        display: flex;
-        .term-dot {
-            width: 20px;
-            height: 20px;
-            margin-top: 5px;
-            background-color: #F16769;
-            border-radius: 50%;
-        }
-        .term-content {
-            flex-grow: 1;
-            max-width: 310px!important;
-            padding: 0 10px;
-            .term-name {
-                background-color: #FCE6E6;
-                padding: 4px 10px;
-                border-radius: 6px;
+    .card-content {
+        min-height: calc(100vh - 450px);
+        height: calc(100vh - 450px);
+        position: relative;
+        overflow-y: scroll;
+        overflow-x: hidden;
+        margin-bottom: 20px;
+        padding: 10px;
+        .term-item {
+            margin-bottom: 25px;
+            .notfound {
+                a {
+                    font-size: 12px;
+                    width: 100%;
+                    color: black;
+                }
             }
-            .term-solution {
-                font-size: 11px;
+            .syn {
+                text-align: right;
+                input[type="radio"] {
+                    display:none;
+                }
+                label {
+                    background-color: $green-light;
+                    cursor: pointer;
+                    display: inline-block;
+                    padding: 3px 8px;
+                    border-radius: 5px;
+                    text-align: center;
+                }
+                input[type="radio"]:checked+label {
+                    background-color: $green;
+                    color: white;
+                }
+            }
+            .def, .tree {
+                background-color: $gray;
+            }
+            .tree {
+                max-height: 200px;
+                .tree-node.selected > .tree-content {
+                    background-color: #D8D8D8;
+                }
+            }
+        }
+        .term-item-top {
+            margin-bottom: 10px;
+            display: flex;
+            .term-dot {
+                width: 20px;
+                height: 20px;
+                margin-top: 5px;
+                border-radius: 50%;
+            }
+            .dot-red {
+                background-color: $red;
+            }
+            .dot-green {
+                background-color: $green;
+            }
+            .term-content {
                 flex-grow: 1;
-                text-align: left;
+                max-width: 310px!important;
+                padding: 0 10px;
+                .term-name {
+                    background-color: $pink;
+                    padding: 4px 10px;
+                    border-radius: 6px;
+                }
+                .term-solution {
+                    font-size: 11px;
+                    flex-grow: 1;
+                    text-align: left;
+                }
+            }
+            .btn-confirm {
+                max-height: 32px;
+                width: 65px;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 6px;
+                cursor: pointer;
             }
         }
-        .btn-confirm {
-            max-height: 32px;
-            width: 65px;
-            background-color: #E75240;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 6px;
-            cursor: pointer;
+        .resolved-qterm {
+            .term-content {
+                display: flex;
+                align-items: center;
+                .term-solution {
+                    flex-grow: 0;
+                    padding:0 5px;
+                }
+                .resolved-term {
+                    text-align: center;
+                }
+            }
+            .collapse-content {
+                padding-top: 20px;
+            }
         }
     }
 }
@@ -155,27 +282,18 @@ $gray: #F1F1F1;
                 padding: 2px 16px;
             }
             li:first-child a {
-                background-color: rgba(203,224,234, 0.7);
+                background-color: $cyan-light;
                 color: white;
-            }
-            li:first-child.is-active a {
-                background-color: #CBE0EA;
-                color: black;
             }
             li:nth-of-type(2) a {
-                background-color: rgba(202,227,184, 0.7);
+                background-color: $green-light;
                 color: white;
-            }
-            li:nth-of-type(2).is-active a {
-                background-color: #B1E48F;
-                color: black;
             }
             li:last-child a {
-                background-color: rgba(247,233,231, 0.7);
+                background-color: $pink-light;
                 color: white;
             }
-            li:last-child.is-active a {
-                background-color: #FBE5E5;
+            li.is-active a {
                 color: black;
             }
         }
@@ -184,16 +302,16 @@ $gray: #F1F1F1;
         padding: 0;
     }
     .tab-item {
-        min-height: 300px;
+        min-height: 200px;
     }
     .tab-item:first-child {
-        background-color: #CBE0EA;
+        background-color: $cyan-light;
     }
     .tab-item:nth-of-type(2) {
-        background-color: #B1E48F;
+        background-color: $green-light;
     }
     .tab-item:last-child {
-        background-color: #FBE5E5;
+        background-color: $pink-light;
     }
 }
 .ql-toolbar {
@@ -202,11 +320,11 @@ $gray: #F1F1F1;
 .ql-container {
     border: none!important;
     .ql-editor {
-        min-height: 765px;
+        min-height: calc(100vh - 280px);
         p {
             u {
                 text-decoration: none;
-                border-bottom: 2px solid #E65343;
+                border-bottom: 2px solid $red;
             }
             u:hover {
                 background-color: rgb(252, 238, 238);
@@ -216,4 +334,19 @@ $gray: #F1F1F1;
 }
 .u-hover {
     background-color: rgb(252, 238, 238);
+}
+@media screen and (min-width: 1472px) and (max-width: 1550px) {
+    .container {
+        width: 1222px;
+    }
+}
+@media screen and (min-width: 1280px) and (max-width: 1472px) {
+    .container {
+        width: 1024px;
+    }
+}
+@media screen and (min-width: 1088px) and (max-width: 1280px) {
+    .container {
+        width: unset;
+    }
 }

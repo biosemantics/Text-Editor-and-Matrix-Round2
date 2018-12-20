@@ -1,24 +1,21 @@
 <template>
-<div>
-    <div class="navbar denav has-background-grey-light">
+<div class="main-wrapper">
+    <div class="navbar denav">
         <h2>Description Editor</h2>
         <a href="javascript:void(0)" @click="signout">Signout</a>
     </div>
     <div class="container">
         <div class="columns">
             <div class="column is-8">
-                <div class="tab-header columns">
+                <div class="tab-header columns detab">
                     <div class="column tabs is-boxed is-10 p0">
                         <ul>
-                            <li class="is-active">
-                                <a><span>Example1</span></a>
-                            </li>
-                            <li>
-                                <a><span>Example2</span></a>
+                            <li v-for="t in tabs" :key="t.id" v-bind:class="{'is-active': t.active}" @click="toggleTab(t.id)">
+                                <a><span contenteditable="true" spellcheck="false">{{ t.name }}</span></a>
                             </li>
                         </ul>
                     </div>
-                    <div class="column is-2 p0 btn-formalize">
+                    <div class="column is-2 p0 btn-formalize" @click="formalize">
                         <b-icon
                             icon="table-large"
                             size="is-medium">
@@ -26,18 +23,19 @@
                         <p>Formalize</p>
                     </div>
                 </div>
-                <div class="tab-content">
-                    <vue-editor v-model="editorContent" ref="editor" spellcheck="false"></vue-editor>
+                <div class="tab-content main-de-content">
+                    <vue-editor v-model="editorContent" ref="editor" spellcheck="false" v-if="activeTab.type=='editor'"></vue-editor>
+                    <de-table ref="detable" v-if="activeTab.type=='table'"></de-table>
                 </div>
 
                 <div class="buttons-wrapper">
                     <div class="left-buttons">
-                        <button class="button btn-red">Save as file</button>
-                        <button class="button btn-red">Save as template</button>
-                        <button class="button btn-blue">Export</button>
+                        <button class="button bk-red">Save as file</button>
+                        <button class="button bk-red">Save as template</button>
+                        <button class="button bk-cyan">Export</button>
                     </div>
                     <div class="right-buttons">
-                        <button class="button btn-darkred" v-on:click="check_quality">Check Quality</button>
+                        <button class="button bk-red" v-on:click="check_quality">Check Quality</button>
                     </div>
                 </div>
             </div>
@@ -52,17 +50,19 @@
 
 <script>
 import firebase from 'firebase';
-import { mapState, mapMutations, mapActions } from 'vuex';
+import { mapState, mapMutations, mapActions, mapGetters } from 'vuex';
 import { VueEditor } from "vue2-editor";
 import Storage from "./Storage";
 import ArtBoard  from "./ArtBoard";
+import DETable from "./DETable";
 import API from '@/network/api';
 
 export default {
     components: {
         VueEditor,
         Storage,
-        ArtBoard
+        ArtBoard,
+        'de-table': DETable,
     },
     data() {
         return {
@@ -93,8 +93,12 @@ export default {
     computed: {
         ...mapState([
             'qterms',
-            'activeTabIndex',
-            'replaceArray'
+            'activeTabID',
+            'replaceArray',
+            'tabs',
+        ]),
+        ...mapGetters([
+            'activeTab',
         ]),
     },
     methods: {
@@ -102,7 +106,8 @@ export default {
             'find_qterms',
             'insert_resp_body',
             'find_definition',
-            'get_tree'
+            'get_tree',
+            'open_table',
         ]),
         ...mapMutations([
             'ADD_TEXT',
@@ -110,9 +115,14 @@ export default {
             'CLEAN_TAB_DUST',
             'UPDATE_TEXT_ARRAY',
             'UPDATE_QTERMS_INDEX',
+            'RESOLVE_QTERM',
+            'SET_TAB_ACTIVE',
         ]),
         check_quality() {
             const text = this.editor.getText(); // .replace(/(\r\n|\n|\r)/gm,"");
+            if (text.replace(/\s/g, '')==='') {
+                return;
+            }
             this.CLEAN_TAB_DUST();
             this.ADD_TEXT({
                 html: this.editorContent,
@@ -132,30 +142,48 @@ export default {
         },
         highlight() {
             this.qterms.forEach(q => {
-                if (q.tabID == this.activeTabIndex) {
+                if (q.tabID == this.activeTabID) {
                     q.index.forEach(i => {
                         this.editor.formatText(i.pos, i.length, 'underline', true);
                     });
                 }
             });
         },
+        formalize() {
+            if (this.activeTab.type === 'table') return;
+            if (this.activeTab.parsed) {
+                this.open_table();
+            }
+        },
+        toggleTab(tabID) {
+            this.SET_TAB_ACTIVE(tabID);
+        },
         confirm(qindex) {
             const replaceObj = this.replaceArray.find(r => r.qindex == qindex);
-            if (replaceObj !== undefined && this.qterms[qindex] != null) {
-                this.qterms[qindex].index.forEach(i => {
+            const qterm = this.qterms[qindex];
+            if (replaceObj !== undefined && qterm != null) {
+                qterm.index.forEach(i => {
                     this.editor.removeFormat(i.pos, i.length);
-                    this.editor.deleteText(i.pos, i.length);
-                    this.editor.insertText(i.pos, replaceObj.syn);
-                    this.UPDATE_QTERMS_INDEX({
-                        pos: i.pos,
-                        delta: replaceObj.syn.length - i.length
-                    });
+                    if (qterm.qType.type==='broad' || qterm.qType.type==='not_recommended') {
+                        this.editor.deleteText(i.pos, i.length);
+                        this.editor.insertText(i.pos, replaceObj.term);
+                        this.UPDATE_QTERMS_INDEX({
+                            pos: i.pos,
+                            delta: replaceObj.term.length - i.length
+                        });
+                    } else {
+                        this.editor.insertText(i.pos, replaceObj.term + ' ');
+                        this.UPDATE_QTERMS_INDEX({
+                            pos: i.pos,
+                            delta: replaceObj.term.length + 1
+                        });
+                    }
                 });
                 this.UPDATE_TEXT_ARRAY({
                     html: this.editorContent,
                     text: this.editor.getText()
                 });
-                this.qterms.splice(qindex, 1);
+                this.RESOLVE_QTERM(qindex);
             }
         },
         signout() {

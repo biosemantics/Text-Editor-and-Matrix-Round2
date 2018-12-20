@@ -47,7 +47,10 @@ export function findAllIndex(heap, needle) {
 export function getQType(ontology, notes, bioID) {
     let qtype = [];
     if (!ontology) {
-        qtype.push({type: 'notfound'});
+        qtype.push({
+            type: 'notfound',
+            interval: null
+        });
     } else {
         if (ontology.length > 1) {
             for (let i=0; i<ontology.length; i++) {
@@ -82,4 +85,8 @@ export function getQType(ontology, notes, bioID) {
         });
     }
     return qtype;
+}
+
+export function uniqueID() {
+    return new Date().getTime();
 }
