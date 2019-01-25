@@ -40,7 +40,7 @@
                         </div>
                     </div>
                     <div class="syn-case" v-if="q.qType.type==='broad' || q.qType.type==='not_recommended'" :data-qtype-id="i">
-                        <div class="columns pl30 mb20" v-for="(o, j) in q.qType.ontology" :key="j">
+                        <div class="columns pl30 mb20 pr10" v-for="(o, j) in q.qType.ontology" :key="j">
                             <div class="column is-4 syn">
                                 <input type="radio" 
                                     v-bind:id="o.matchingTerm.replace(/ /g,'').toLowerCase()" 
@@ -52,9 +52,9 @@
                                 {{ termDefinition(o.matchingTerm)  }}
                             </div>
                         </div>
-                        <div class="columns pl30 mb20">
-                            <div class="column is-4">
-                                Select a term from the tree:
+                        <div class="columns pl30 mb20 pr10">
+                            <div class="column is-4 syn">
+                                <label>Select a term from the tree:</label>
                             </div>
                             <div class="column is-8">
                                 <tree 
@@ -65,7 +65,7 @@
                         </div>
                     </div>
                     <div class="multi_assoc" v-if="q.qType.type==='multi_assoc'">
-                        <div class="columns pl30 mb20" v-for="(a, j) in q.qType.alterIDs" :key="j">
+                        <div class="columns pl30 mb20 pr10" v-for="(a, j) in q.qType.alterIDs" :key="j">
                             <div class="column is-4 syn">
                                 <input type="radio" 
                                     v-bind:id="getBioEntityNameOrigin(a).replace(/ /g,'').toLowerCase()" 
@@ -98,17 +98,17 @@
                     </div>
                     <b-collapse class="panel" :open.sync="qterms[i].showReview">
                         <div class="syn-case" v-if="q.qType.type==='broad' || q.qType.type==='not_recommended'" :data-qtype-id="i">
-                            <div class="columns pl30 mb20" v-for="(o, j) in q.qType.ontology" :key="j">
-                                <div class="column is-4 syn">
+                            <div class="columns pl30 mb20 pr10" v-for="(o, j) in q.qType.ontology" :key="j">
+                                <div class="column is-4 syn" v-bind:class="{chosen: q.resolved && o.matchingTerm==replaceArray.find(r=>r.qindex==i).term}">
                                     <label>{{ o.matchingTerm }}</label>
                                 </div>
                                 <div class="column is-8 def">
                                     {{ termDefinition(o.matchingTerm)  }}
                                 </div>
                             </div>
-                            <div class="columns pl30 mb20">
-                                <div class="column is-4">
-                                    Term tree:
+                            <div class="columns pl30 mb20 pr10">
+                                <div class="column is-4 syn">
+                                    <label>Select a term from the tree:</label>
                                 </div>
                                 <div class="column is-8">
                                     <tree :data="treeData"/>
@@ -116,7 +116,7 @@
                             </div>
                         </div>
                         <div class="multi_assoc" v-if="q.qType.type==='multi_assoc'">
-                            <div class="columns pl30 mb20" v-for="(a, j) in q.qType.alterIDs" :key="j">
+                            <div class="columns pl30 mb20 pr10" v-for="(a, j) in q.qType.alterIDs" :key="j">
                                 <div class="column is-4 syn">
                                     <label>{{ getBioEntityNameOrigin(a) }}</label>
                                 </div>

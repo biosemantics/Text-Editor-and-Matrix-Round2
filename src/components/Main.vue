@@ -11,7 +11,15 @@
                     <div class="column tabs is-boxed is-10 p0">
                         <ul>
                             <li v-for="t in tabs" :key="t.id" v-bind:class="{'is-active': t.active}" @click="toggleTab(t.id)">
-                                <a><span contenteditable="true" spellcheck="false">{{ t.name }}</span></a>
+                                <a>
+                                    <span contenteditable="true" 
+                                        :id="'tab_'+t.id"
+                                        spellcheck="false" 
+                                        v-on:blur="tabNameChanged(t)"
+                                        onkeypress="javascript: return event.which != 13;">
+                                        {{ t.name }}
+                                    </span>
+                                </a>
                             </li>
                         </ul>
                     </div>
@@ -20,11 +28,11 @@
                             icon="table-large"
                             size="is-medium">
                         </b-icon>
-                        <p>Formalize</p>
+                        <p>Matricize</p>
                     </div>
                 </div>
                 <div class="tab-content main-de-content">
-                    <vue-editor v-model="editorContent" ref="editor" spellcheck="false" v-if="activeTab.type=='editor'"></vue-editor>
+                    <vue-editor v-model="editorContent" ref="editor" spellcheck="false" v-show="activeTab.type=='editor'"></vue-editor>
                     <de-table ref="detable" v-if="activeTab.type=='table'"></de-table>
                 </div>
 
@@ -117,6 +125,7 @@ export default {
             'UPDATE_QTERMS_INDEX',
             'RESOLVE_QTERM',
             'SET_TAB_ACTIVE',
+            'CHANGE_TABLE_NAME',
         ]),
         check_quality() {
             const text = this.editor.getText(); // .replace(/(\r\n|\n|\r)/gm,"");
@@ -151,8 +160,36 @@ export default {
         },
         formalize() {
             if (this.activeTab.type === 'table') return;
-            if (this.activeTab.parsed) {
-                this.open_table();
+            const resolvedCount = this.qterms.filter(q => q.resolved).length;
+            if (resolvedCount*2 < this.qterms.length) {
+                this.$dialog.alert({
+                    title: 'Terms needing more information',
+                    message: 'You need to resolve at least 50% of the terms',
+                    type: 'is-danger',
+                    hasIcon: false,
+                });
+                return;
+            }
+            if (resolvedCount < this.qterms.length) {
+                this.$dialog.confirm({
+                    title: 'Terms needing more information',
+                    message: 'You have not resolve terms yet. Will you go back and continue resolve the remaining terms or ignore the warning and go ahead with the formalization?',
+                    cancelText: 'Resolve',
+                    confirmText: 'Matricize',
+                    onCancel: () => {
+                        return;
+                    },
+                    onConfirm: () => {
+                        if (this.activeTab.parsed) {
+                            this.open_table();
+                        }
+                    }
+                });
+            }
+            else {
+                if (this.activeTab.parsed) {
+                    this.open_table();
+                }
             }
         },
         toggleTab(tabID) {
@@ -161,29 +198,39 @@ export default {
         confirm(qindex) {
             const replaceObj = this.replaceArray.find(r => r.qindex == qindex);
             const qterm = this.qterms[qindex];
+            const app = this;
             if (replaceObj !== undefined && qterm != null) {
                 qterm.index.forEach(i => {
-                    this.editor.removeFormat(i.pos, i.length);
+                    app.editor.removeFormat(i.pos, i.length);
                     if (qterm.qType.type==='broad' || qterm.qType.type==='not_recommended') {
-                        this.editor.deleteText(i.pos, i.length);
-                        this.editor.insertText(i.pos, replaceObj.term);
-                        this.UPDATE_QTERMS_INDEX({
+                        app.editor.deleteText(i.pos, i.length);
+                        app.editor.insertText(i.pos, replaceObj.term);
+                        app.UPDATE_QTERMS_INDEX({
                             pos: i.pos,
                             delta: replaceObj.term.length - i.length
                         });
                     } else {
-                        this.editor.insertText(i.pos, replaceObj.term + ' ');
-                        this.UPDATE_QTERMS_INDEX({
+                        app.editor.insertText(i.pos, replaceObj.term + ' ');
+                        app.UPDATE_QTERMS_INDEX({
                             pos: i.pos,
                             delta: replaceObj.term.length + 1
                         });
                     }
                 });
-                this.UPDATE_TEXT_ARRAY({
-                    html: this.editorContent,
-                    text: this.editor.getText()
+                app.UPDATE_TEXT_ARRAY({
+                    html: app.editorContent,
+                    text: app.editor.getText()
                 });
-                this.RESOLVE_QTERM(qindex);
+                app.RESOLVE_QTERM(qindex);
+            }
+        },
+        tabNameChanged(tab) {
+            const newName = document.getElementById('tab_'+tab.id).innerHTML.trim();
+            if (tab.tableOpen) {
+                this.CHANGE_TABLE_NAME({
+                    originTabID: tab.id,
+                    newName
+                });
             }
         },
         signout() {

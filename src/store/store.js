@@ -131,6 +131,10 @@ export const store = new Vuex.Store({
         RESOLVE_QTERM(state, qindex) {
             state.qterms[qindex].resolved = true;
         },
+        CHANGE_TABLE_NAME(state, {originTabID, newName}) {
+            const i = state.tabs.findIndex(t => t.type=="table" && t.originTabID==originTabID);
+            state.tabs[i].name = newName + '.tb';
+        }
     }, 
     actions: {
         insert_resp_body: ({state}, resp) => {

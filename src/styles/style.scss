@@ -60,6 +60,9 @@ a, a:hover, a:visited, a:active, a:focus {
 .pl30 {
     padding-left: 30px;
 }
+.pr10 {
+    padding-right: 10px;
+}
 .mb20 {
     margin-bottom: 20px!important;
 }
@@ -206,6 +209,17 @@ a, a:hover, a:visited, a:active, a:focus {
                     color: white;
                 }
             }
+            .resolved-qterm {
+                .syn {
+                    label {
+                        background-color: $gray;
+                        cursor: default;
+                    }
+                    &.chosen label {
+                        background-color: $green;
+                    }
+                }
+            }
             .def, .tree {
                 background-color: $gray;
             }
@@ -334,6 +348,17 @@ a, a:hover, a:visited, a:active, a:focus {
 }
 .u-hover {
     background-color: rgb(252, 238, 238);
+}
+.modal-card-foot {
+    button, .modal-card-foot button:hover {
+        color: black;
+    }
+    button.is-primary {
+        background-color: $cyan;
+    }
+    button.is-danger {
+        background-color: $red;
+    }
 }
 @media screen and (min-width: 1472px) and (max-width: 1550px) {
     .container {

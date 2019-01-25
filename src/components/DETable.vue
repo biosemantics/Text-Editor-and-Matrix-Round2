@@ -79,11 +79,20 @@ export default {
     mounted() {
         this.data = [];
         this.characters.forEach(c => {
-            const src = this.statements.find(s => s.id == c.src).text;
+            let characterValue = c.value;
+            let src = this.statements.find(s => s.id == c.src).text;
+            const qi = this.qterms.findIndex(q => q.srcType=="character" && q.value==c.value);
+            if (qi>-1 && this.qterms[qi].resolved) {
+                const replaced = this.replaceArray.find(r => r.qindex==qi);
+                if (replaced !== undefined) {
+                    characterValue = replaced.term;
+                    src = src.replace(c.value, characterValue);
+                }
+            }
             this.data.push({
                 id: this.data.length,
                 characterName: c.displayName,
-                value: c.value,
+                value: characterValue,
                 text: src
             });
         })
@@ -92,6 +101,8 @@ export default {
         ...mapState([
             'characters',
             'statements',
+            'qterms',
+            'replaceArray'
         ]),
     },
     methods: {
