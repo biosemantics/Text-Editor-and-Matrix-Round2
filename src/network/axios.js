@@ -2,8 +2,11 @@ import axios from 'axios';
 import CONF from '@/config/config.js';
 
 export default {
-    search: function(term, parent=null) {
+    search: function(term, user=null, parent=null) {
         let url = CONF.apiUrl + 'carex/search?term='+encodeURI(term);
+        if (user) {
+            url += '&user='+encodeURI(user);
+        }
         if (parent) {
             url += '&parent='+encodeURI(parent);
         }

@@ -48,7 +48,11 @@
                 </div>
             </div>
             <div class="column is-4">
-                <art-board ref="artBoard" v-on:confirm="confirm"></art-board>
+                <art-board 
+                    ref="artBoard" 
+                    v-on:confirm="confirm"
+                    v-on:added="added">
+                </art-board>
                 <storage></storage>
             </div>
         </div>
@@ -222,6 +226,15 @@ export default {
                     text: app.editor.getText()
                 });
                 app.RESOLVE_QTERM(qindex);
+            }
+        },
+        added(qindex) {
+            const qterm = this.qterms[qindex];
+            const app = this;
+            if (qterm != null) {
+                qterm.index.forEach(i => {
+                    app.editor.removeFormat(i.pos, i.length);
+                });
             }
         },
         tabNameChanged(tab) {

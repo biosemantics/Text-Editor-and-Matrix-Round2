@@ -88,15 +88,17 @@
                         <div class="term-content">
                             <div class="term-name"><b>{{ q.value.slice(0, 12) }}</b></div>
                             <div class="term-solution">{{ termSolution(q) }}</div>
-                            <div class="resolved-term">
+                            <div class="resolved-term" v-if="q.qType.type!=='notfound'">
                                 <b>{{ getResolvedTerm(i).slice(0, 10) }}...</b>
                             </div>
                         </div>
-                        <button class="btn bk-cyan btn-confirm" @click="qterms[i].showReview = !qterms[i].showReview">
+                        <button class="btn bk-cyan btn-confirm" @click="qterms[i].showReview = !qterms[i].showReview" v-if="q.qType.type!=='notfound'">
                             {{ qterms[i].showReview ? 'Close' : 'Review' }}
                         </button>
                     </div>
                     <b-collapse class="panel" :open.sync="qterms[i].showReview">
+                        <div class="notfound columns pl30" v-if="q.qType.type==='notfound'">
+                        </div>
                         <div class="syn-case" v-if="q.qType.type==='broad' || q.qType.type==='not_recommended'" :data-qtype-id="i">
                             <div class="columns pl30 mb20 pr10" v-for="(o, j) in q.qType.ontology" :key="j">
                                 <div class="column is-4 syn" v-bind:class="{chosen: q.resolved && o.matchingTerm==replaceArray.find(r=>r.qindex==i).term}">
@@ -157,6 +159,7 @@ export default {
     name: 'art-board',
     computed: {
         ...mapState([
+            'user',
             'bios',
             'statements',
             'qterms',
@@ -179,6 +182,7 @@ export default {
             exampleSentence: '',
             classIRI: ''
         },
+        intervalHeap: {},
         matchingTermToEdit: '',
         openEditTermModal: false
     }),
@@ -245,7 +249,10 @@ export default {
         },
         getResolvedTerm(qindex) {
             const replaceObj = this.replaceArray.find(r => r.qindex == qindex);
-            return replaceObj.term;
+            if (!!replaceObj && replaceObj.hasOwnProperty('term'))
+                return replaceObj.term;
+            else
+                return "";
         },
         onDefine(ontology, bioID) {
             const def = this.termDefinition(ontology.matchingTerm);
@@ -271,15 +278,17 @@ export default {
             })
         },
         checkIfAdded(term, qindex) {
-            this.qterms[qindex].interval = setInterval(() => {
-                axios.search(term).then(resp => {
+            const app = this;
+            app.intervalHeap[qindex] = setInterval(() => {
+                axios.search(term, app.user.name).then(resp => {
                     console.log('searching..', resp.data);
                     if (resp.data.entries.length > 0 && resp.data.entries[0].score == 1.0) {
-                        this.RESOLVE_QTERM(qindex);
-                        clearInterval(this.qterms[qindex].interval);
+                        app.RESOLVE_QTERM(qindex);
+                        clearInterval(app.intervalHeap[qindex]);
+                        this.$emit('added', qindex);
                     }
                 });
-            }, 1000);
+            }, 2000);
         },
         checkAllResolved() {
             return this.activeTab.parsed && this.qterms.find(q => !q.resolved)===undefined;
