@@ -10,7 +10,7 @@
                 <div class="tab-header columns detab">
                     <div class="column tabs is-boxed is-10 p0">
                         <ul>
-                            <li v-for="t in tabs" :key="t.id" v-bind:class="{'is-active': t.active}" @click="toggleTab(t.id)">
+                            <li v-for="t in tabs" :key="t.id" v-bind:class="{'is-active': t.active}" @click="toggleTab($event, t.id)">
                                 <a>
                                     <span contenteditable="true" 
                                         :id="'tab_'+t.id"
@@ -19,6 +19,7 @@
                                         onkeypress="javascript: return event.which != 13;">
                                         {{ t.name }}
                                     </span>
+                                    &nbsp;&nbsp;&nbsp;<span @click="closeTab(t.id)">x</span>
                                 </a>
                             </li>
                         </ul>
@@ -32,18 +33,26 @@
                     </div>
                 </div>
                 <div class="tab-content main-de-content">
-                    <vue-editor v-model="editorContent" ref="editor" spellcheck="false" v-show="activeTab.type=='editor'"></vue-editor>
+                    <vue-editor 
+                        v-model="editorContent" 
+                        ref="editor" 
+                        spellcheck="false" 
+                        v-show="activeTab.type=='editor'"
+                        :disabled="activeTab.isEditable===false"
+                        >
+                    </vue-editor>
                     <de-table ref="detable" v-if="activeTab.type=='table'"></de-table>
                 </div>
 
-                <div class="buttons-wrapper">
-                    <div class="left-buttons">
-                        <button class="button bk-red">Save as file</button>
-                        <button class="button bk-red">Save as template</button>
-                        <button class="button bk-cyan">Export</button>
+                <div class="buttons-wrapper" v-bind:class="{'flex-row-reverse': activeTab.isEditable===false}">
+                    <div class="left-buttons" v-if="activeTab.isEditable!==false">
+                        <button class="button bk-red" @click="onSave(1)">{{ activeTab.type=='editor' ? 'Save as file' : 'Save Table' }}</button>
+                        <button class="button bk-red" v-show="activeTab.type=='editor'" @click="onSave(2)">Save as template</button>
+                        <button class="button bk-cyan" @click="onExport">Export</button>
                     </div>
-                    <div class="right-buttons">
-                        <button class="button bk-red" v-on:click="check_quality">Check Quality</button>
+                    <div class="right-buttons" v-if="activeTab.type!=='table'">
+                        <button class="button bk-red" v-on:click="check_quality" v-if="activeTab.isEditable!==false">Check Quality</button>
+                        <button class="button bk-cyan btn-clone" @click="clone" v-if="activeTab.isEditable===false">Clone</button>
                     </div>
                 </div>
             </div>
@@ -53,7 +62,11 @@
                     v-on:confirm="confirm"
                     v-on:added="added">
                 </art-board>
-                <storage></storage>
+                <storage
+                    v-on:openTemplate="openFile"
+                    v-on:openFile="openFile"
+                    v-on:openTable="openTable">
+                </storage>
             </div>
         </div>
     </div>
@@ -68,6 +81,7 @@ import Storage from "./Storage";
 import ArtBoard  from "./ArtBoard";
 import DETable from "./DETable";
 import API from '@/network/api';
+import { uniqueID } from '@/helpers/helpers';
 
 export default {
     components: {
@@ -80,9 +94,11 @@ export default {
         return {
             editorContent: "",
             editor: null,
+            db: null,
         }
     },
     mounted: function() {
+        this.db = firebase.database();
         this.SET_USER(firebase.auth().currentUser);
         this.get_tree();
         this.editor = this.$refs.editor.quill;
@@ -106,8 +122,11 @@ export default {
         ...mapState([
             'qterms',
             'activeTabID',
+            'activeTabIndex',
             'replaceArray',
             'tabs',
+            'texts',
+            'user',
         ]),
         ...mapGetters([
             'activeTab',
@@ -130,12 +149,15 @@ export default {
             'RESOLVE_QTERM',
             'SET_TAB_ACTIVE',
             'CHANGE_TABLE_NAME',
+            'ADD_TAB',
+            'CHANGE_TAB_NAME',
+            'CLOSE_TAB'
         ]),
         check_quality() {
-            const text = this.editor.getText(); // .replace(/(\r\n|\n|\r)/gm,"");
-            if (text.replace(/\s/g, '')==='') {
+            if (this.isEditorEmpty()) {
                 return;
             }
+            const text = this.editor.getText();
             this.CLEAN_TAB_DUST();
             this.ADD_TEXT({
                 html: this.editorContent,
@@ -196,8 +218,16 @@ export default {
                 }
             }
         },
-        toggleTab(tabID) {
-            this.SET_TAB_ACTIVE(tabID);
+        toggleTab($event, tabID) {
+            if ($event.target.innerText !== "x") {
+                this.SET_TAB_ACTIVE(tabID);
+                const textObj = this.texts.find(t => t.tabID==tabID);
+                if (!!textObj) {
+                    this.editor.setText(textObj.text);
+                } else {
+                    this.editor.setText('');
+                }
+            }
         },
         confirm(qindex) {
             const replaceObj = this.replaceArray.find(r => r.qindex == qindex);
@@ -239,6 +269,7 @@ export default {
         },
         tabNameChanged(tab) {
             const newName = document.getElementById('tab_'+tab.id).innerHTML.trim();
+            this.CHANGE_TAB_NAME(newName);
             if (tab.tableOpen) {
                 this.CHANGE_TABLE_NAME({
                     originTabID: tab.id,
@@ -250,6 +281,191 @@ export default {
             firebase.auth().signOut().then(() => {
                 this.$router.replace('login');
             });
+        },
+        isEditorEmpty() {
+            if (this.activeTab.type === "editor") {
+                const text = this.editor.getText().replace(/(\r\n|\n|\r)/gm,"");
+                if (text.replace(/\s/g, '')==='') {
+                    return true;
+                }
+                return false;
+            }
+        },
+        onSave(saveType) {
+            if (this.isEditorEmpty()) {
+                return;
+            }
+            const saveText = this.activeTab.type==="table" ? "table" : (saveType==1 ? 'file' : 'template');
+            this.$dialog.confirm({
+                title: 'Save',
+                message: 'Are you sure to save as a '+ saveText + '?',
+                cancelText: 'Cancel',
+                confirmText: 'Save',
+                onCancel: () => {
+                    return;
+                },
+                onConfirm: () => {
+                    if (this.activeTab.type==="table") {
+                        this.$refs.detable.saveTable();
+                    } else {
+                        const userID = this.user.id;
+                        const tabName = this.activeTab.name;
+                        const text = this.editor.getText();
+                        const refID = saveType===1 ? "users/"+userID+"/file" : "template";
+                        const checkURL = refID+"/"+this.activeTab.id;
+                        let data = {
+                            tabName,
+                            text
+                        };
+                        if (saveType==2) {
+                            data.userID = userID;
+                        }
+                        this.db.ref(checkURL).once('value', snapshot => {
+                            if (snapshot.exists() && saveType===1) {
+                                this.db.ref(checkURL).update(data);
+                            } else {
+                                this.db.ref(refID).push(data);
+                            }
+                        });
+                    }
+                    location.reload();
+                }
+            });
+        },
+        onExport() {
+            if (this.isEditorEmpty()) {
+                return;
+            }
+            this.$dialog.confirm({
+                title: 'Export',
+                message: 'Are you sure to export '+(this.activeTab.type === 'editor' ? 'as a doc?' : 'as an xls?'),
+                cancelText: 'Cancel',
+                confirmText: 'Export',
+                onCancel: () => {
+                    return;
+                },
+                onConfirm: () => {
+                    if (this.activeTab.type === 'editor') {
+                        this.export2Doc(this.activeTab.name);
+                    } else {
+                        this.exportTableToExcel("table-character", this.activeTab.name);
+                    }
+                }
+            });
+        },
+        
+        export2Doc(filename = '') {
+            const preHtml = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>\
+            <head><meta charset='utf-8'>\
+            <title>Export HTML To Doc</title>\
+            <style>\
+            u {\
+                color: #ED553F;\
+            }\
+            </style>\
+            </head><body>";
+            const postHtml = "</body></html>";
+            let content = this.editorContent;
+            let html = preHtml+content+postHtml;
+
+            const blob = new Blob(['\ufeff', html], {
+                type: 'application/msword'
+            });
+
+            let url = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(html);
+            filename = filename?filename+'.doc':'document.doc';
+            let downloadLink = document.createElement("a");
+
+            document.body.appendChild(downloadLink);
+
+            if(navigator.msSaveOrOpenBlob) {
+                navigator.msSaveOrOpenBlob(blob, filename);
+            } else {
+                downloadLink.href = url;
+                downloadLink.download = filename;
+                downloadLink.click();
+            }
+            document.body.removeChild(downloadLink);
+        },
+
+        exportTableToExcel(tableID, filename = '') {
+            const dataType = 'application/vnd.ms-excel';
+            const tableSelect = document.getElementById(tableID);
+            const tableHTML = tableSelect.outerHTML.replace(/ /g, '%20');
+
+            filename = filename ? filename+'.xls' : 'excel_data.xls';
+            let downloadLink = document.createElement("a");
+            document.body.appendChild(downloadLink);
+
+            if (navigator.msSaveOrOpenBlob) {
+                const blob = new Blob(['\ufeff', tableHTML], {
+                    type: dataType
+                });
+                navigator.msSaveOrOpenBlob( blob, filename);
+            } else {
+                downloadLink.href = 'data:' + dataType + ', ' + tableHTML;
+                downloadLink.download = filename;
+                downloadLink.click();
+            }
+        },
+
+        openFile(file) {
+            const isEditable = !file.hasOwnProperty('userID');
+            if (this.tabs.find(t => t.id==file.id)===undefined) {
+                this.ADD_TAB({
+                    id: file.id,
+                    type: 'editor',
+                    name: file.tabName,
+                    tableOpen: false,
+                    isEditable: isEditable, 
+                    active: true
+                });
+                this.SET_TAB_ACTIVE(file.id);
+                this.ADD_TEXT({
+                    html: file.text,
+                    text: file.text
+                });
+                this.editor.setText(file.text);
+            }
+        },
+        openTable(table) {
+            if (this.tabs.find(t => t.id==table.id)===undefined) {
+                this.ADD_TAB({
+                    id: table.id,
+                    type: 'table',
+                    name: table.tabName,
+                    data: table.data,
+                    active: true
+                });
+                this.SET_TAB_ACTIVE(table.id);
+            }
+        },
+        clone() {
+            const newID = uniqueID();
+            const text = this.texts.find(t => t.tabID==this.activeTabID).text;
+            this.ADD_TAB({
+                id: newID,
+                type: 'editor',
+                isEditable: true,
+                tableOpen: false,
+                name: this.activeTab.name+'-Copied',
+                active: true
+            });
+            this.SET_TAB_ACTIVE(newID);
+            this.ADD_TEXT({
+                html: text,
+                text
+            });
+            this.editor.setText(text);
+        },
+        closeTab(tabID) {
+            this.CLOSE_TAB(tabID);
+            const textObj = this.texts.find(t => t.id===this.tabs[0].id);
+            let text = '';
+            if (!!textObj) {
+                text = textObj.text;
+            }
+            this.editor.setText('');
         }
     }
 }

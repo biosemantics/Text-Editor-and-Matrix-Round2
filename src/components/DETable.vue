@@ -9,6 +9,7 @@
             detailed
             detail-key="id"
             spellcheck="false"
+            id="table-character"
         >
 
             <template slot-scope="props" slot="header">
@@ -70,39 +71,50 @@
 </template>
 
 <script>
-import { mapState, mapMutations, mapActions } from 'vuex';
+import firebase from 'firebase';
+import { mapState, mapMutations, mapActions, mapGetters } from 'vuex';
 export default {
     data: () => ({
+        db: null,
         data: [],
         openedDetailed: []
     }),
     mounted() {
         this.data = [];
-        this.characters.forEach(c => {
-            let characterValue = c.value;
-            let src = this.statements.find(s => s.id == c.src).text;
-            const qi = this.qterms.findIndex(q => q.srcType=="character" && q.value==c.value);
-            if (qi>-1 && this.qterms[qi].resolved) {
-                const replaced = this.replaceArray.find(r => r.qindex==qi);
-                if (replaced !== undefined) {
-                    characterValue = replaced.term;
-                    src = src.replace(c.value, characterValue);
+        this.db = firebase.database();
+        if (this.activeTab.hasOwnProperty('data')) {
+            this.data = JSON.parse(this.activeTab.data);
+        } else {
+            this.characters.forEach(c => {
+                let characterValue = c.value;
+                let src = this.statements.find(s => s.id == c.src).text;
+                const qi = this.qterms.findIndex(q => q.srcType=="character" && q.value==c.value);
+                if (qi>-1 && this.qterms[qi].resolved) {
+                    const replaced = this.replaceArray.find(r => r.qindex==qi);
+                    if (replaced !== undefined) {
+                        characterValue = replaced.term;
+                        src = src.replace(c.value, characterValue);
+                    }
                 }
-            }
-            this.data.push({
-                id: this.data.length,
-                characterName: c.displayName,
-                value: characterValue,
-                text: src
+                this.data.push({
+                    id: this.data.length,
+                    characterName: c.displayName,
+                    value: characterValue,
+                    text: src
+                });
             });
-        })
+        }
     },
     computed: {
         ...mapState([
             'characters',
             'statements',
             'qterms',
+            'user',
             'replaceArray'
+        ]),
+        ...mapGetters([
+            'activeTab',
         ]),
     },
     methods: {
@@ -122,6 +134,21 @@ export default {
             else {
                 this.openedDetailed.splice(this.openedDetailed.indexOf(index), 1);
             }
+        },
+        saveTable() {
+            const refID = "users/"+this.user.id+"/table";
+            const checkURL = refID+"/"+this.activeTab.id;
+            let data = {
+                tabName: this.activeTab.name,
+                data: JSON.stringify(this.data)
+            };
+            this.db.ref(checkURL).once('value', snapshot => {
+                if (snapshot.exists()) {
+                    this.db.ref(checkURL).update(data);
+                } else {
+                    this.db.ref(refID).push(data);
+                }
+            });
         }
     }
 }

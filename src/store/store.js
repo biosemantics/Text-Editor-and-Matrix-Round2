@@ -134,6 +134,18 @@ export const store = new Vuex.Store({
         CHANGE_TABLE_NAME(state, {originTabID, newName}) {
             const i = state.tabs.findIndex(t => t.type=="table" && t.originTabID==originTabID);
             state.tabs[i].name = newName + '.tb';
+        },
+        CHANGE_TAB_NAME(state, newName) {
+            state.tabs[state.activeTabIndex].name = newName;
+        },
+        CLOSE_TAB(state, tabID) {
+            const tabIndex = state.tabs.findIndex(t => t.id===tabID);
+            if (tabIndex > 0) {
+                state.tabs[0].active = true;
+                state.activeTabIndex = 0;
+                state.activeTabID = state.tabs[0].id;
+                state.tabs.splice(tabIndex, 1);
+            }
         }
     }, 
     actions: {

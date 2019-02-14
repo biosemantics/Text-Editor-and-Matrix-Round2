@@ -150,6 +150,9 @@ a, a:hover, a:visited, a:active, a:focus {
     border-bottom: 1px solid #dbdbdb;
     cursor: pointer;
 }
+.btn-clone {
+    padding: 5px 30px;
+}
 .login-wrapper {
     padding-top: 200px;
     .login-form {
@@ -317,6 +320,29 @@ a, a:hover, a:visited, a:active, a:focus {
     }
     .tab-item {
         min-height: 200px;
+        .saved-templates, .saved-files, .saved-tables {
+            display: flex;
+            flex-wrap: wrap;
+            overflow-y: auto;
+            height: 200px;
+            .file-wrapper {
+                width: 70px;
+                margin-right: 10px;
+                margin-bottom: 10px;
+                display: flex;
+                flex-direction: column;
+                cursor: pointer;
+                span.icon {
+                    margin: 0 auto;
+                }
+                label {
+                    word-break: break-all;
+                    line-height: 15px;
+                    text-align: center;
+                    cursor: pointer;
+                }
+            }
+        }
     }
     .tab-item:first-child {
         background-color: $cyan-light;
@@ -359,6 +385,9 @@ a, a:hover, a:visited, a:active, a:focus {
     button.is-danger {
         background-color: $red;
     }
+}
+.flex-row-reverse {
+    flex-direction: row-reverse;
 }
 @media screen and (min-width: 1472px) and (max-width: 1550px) {
     .container {
