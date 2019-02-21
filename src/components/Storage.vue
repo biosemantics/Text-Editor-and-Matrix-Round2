@@ -37,15 +37,10 @@
 </template>
 
 <script>
-import firebase from 'firebase';
-import { mapState } from 'vuex';
+import { mapState, mapActions} from 'vuex';
 export default {
     data() {
         return {
-            db: null,
-            templates: [],
-            files: [],
-            tables: [],
         }
     },
     computed: {
@@ -56,41 +51,22 @@ export default {
             'replaceArray',
             'tabs',
             'user',
+            'templates',
+            'files',
+            'tables'
         ]),
     },
     mounted() {
-        this.db = firebase.database();
-        let app = this;
-        const userID = firebase.auth().currentUser.uid;
-        this.db.ref("users/" + userID + "/file").once('value', function(snapshot) {
-            snapshot.forEach((childSnapshot) => {
-                const childData = childSnapshot.val();
-                app.files.push({
-                    id: childSnapshot.key,
-                    ...childData
-                });
-            });
-        });
-        this.db.ref("users/" + userID + "/table").once('value', function(snapshot) {
-            snapshot.forEach((childSnapshot) => {
-                const childData = childSnapshot.val();
-                app.tables.push({
-                    id: childSnapshot.key,
-                    ...childData
-                });
-            });
-        });
-        this.db.ref("template").once('value', function(snapshot) {
-            snapshot.forEach((childSnapshot) => {
-                const childData = childSnapshot.val();
-                app.templates.push({
-                    id: childSnapshot.key,
-                    ...childData
-                });
-            });
-        });
+        this.get_files();
+        this.get_tables();
+        this.get_templates();
     },
     methods: {
+        ...mapActions([
+            'get_files',
+            'get_tables',
+            'get_templates'
+        ]),
         openTemplate(t) {
             this.$emit('openTemplate', t);
         },

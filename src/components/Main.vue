@@ -2,7 +2,10 @@
 <div class="main-wrapper">
     <div class="navbar denav">
         <h2>Description Editor</h2>
-        <a href="javascript:void(0)" @click="signout">Signout</a>
+        <div>
+            <label>{{ (user ? user.name : '')+' |' }}</label>
+            <a href="javascript:void(0)" @click="signout">Signout</a>
+        </div>
     </div>
     <div class="container">
         <div class="columns">
@@ -127,6 +130,8 @@ export default {
             'tabs',
             'texts',
             'user',
+            'files',
+            'templates'
         ]),
         ...mapGetters([
             'activeTab',
@@ -139,6 +144,8 @@ export default {
             'find_definition',
             'get_tree',
             'open_table',
+            'get_templates',
+            'get_files',
         ]),
         ...mapMutations([
             'ADD_TEXT',
@@ -151,7 +158,8 @@ export default {
             'CHANGE_TABLE_NAME',
             'ADD_TAB',
             'CHANGE_TAB_NAME',
-            'CLOSE_TAB'
+            'CLOSE_TAB',
+            'CHANGE_TAB_ID'
         ]),
         check_quality() {
             if (this.isEditorEmpty()) {
@@ -218,17 +226,6 @@ export default {
                 }
             }
         },
-        toggleTab($event, tabID) {
-            if ($event.target.innerText !== "x") {
-                this.SET_TAB_ACTIVE(tabID);
-                const textObj = this.texts.find(t => t.tabID==tabID);
-                if (!!textObj) {
-                    this.editor.setText(textObj.text);
-                } else {
-                    this.editor.setText('');
-                }
-            }
-        },
         confirm(qindex) {
             const replaceObj = this.replaceArray.find(r => r.qindex == qindex);
             const qterm = this.qterms[qindex];
@@ -291,6 +288,21 @@ export default {
                 return false;
             }
         },
+
+        saveTabText() {
+            if (!!this.editorContent) {
+                const activeTabHasText = this.texts.find(t => t.tabID==this.activeTabID);
+                const objToSave = {
+                    html: this.editorContent,
+                    text: this.editor.getText()
+                };
+                if (activeTabHasText !== undefined) {
+                    this.UPDATE_TEXT_ARRAY(objToSave);
+                } else {
+                    this.ADD_TEXT(objToSave);
+                }
+            }
+        },
         onSave(saveType) {
             if (this.isEditorEmpty()) {
                 return;
@@ -312,7 +324,11 @@ export default {
                         const tabName = this.activeTab.name;
                         const text = this.editor.getText();
                         const refID = saveType===1 ? "users/"+userID+"/file" : "template";
-                        const checkURL = refID+"/"+this.activeTab.id;
+                        let checkURL = "";
+                        const theFile = this.files.find(f => f.tabName == tabName);
+                        if (theFile !== undefined) {
+                            checkURL = refID+"/"+theFile.id;
+                        }
                         let data = {
                             tabName,
                             text
@@ -323,12 +339,18 @@ export default {
                         this.db.ref(checkURL).once('value', snapshot => {
                             if (snapshot.exists() && saveType===1) {
                                 this.db.ref(checkURL).update(data);
+                                this.CHANGE_TAB_ID(theFile.id);
                             } else {
                                 this.db.ref(refID).push(data);
                             }
+                            if (saveType==1) {
+                                this.get_files();
+                            } else {
+                                this.get_templates();
+                            }
                         });
                     }
-                    location.reload();
+                    // location.reload();
                 }
             });
         },
@@ -336,9 +358,19 @@ export default {
             if (this.isEditorEmpty()) {
                 return;
             }
+            let msg = '';
+            if (this.activeTab.type==='editor') {
+                msg = this.activeTab.name + ' will be exported as '+
+                        this.activeTab.name +
+                        ".doc to your 'Downloads' folder";
+            } else {
+                msg = 'All characters, values, source sentences will be exported as '+
+                        this.activeTab.name +
+                        ".xls to your 'Downloads' folder";
+            }
             this.$dialog.confirm({
                 title: 'Export',
-                message: 'Are you sure to export '+(this.activeTab.type === 'editor' ? 'as a doc?' : 'as an xls?'),
+                message: msg,
                 cancelText: 'Cancel',
                 confirmText: 'Export',
                 onCancel: () => {
@@ -348,7 +380,11 @@ export default {
                     if (this.activeTab.type === 'editor') {
                         this.export2Doc(this.activeTab.name);
                     } else {
-                        this.exportTableToExcel("table-character", this.activeTab.name);
+                        const exportData = this.$refs.detable.getExportData();
+                        if (exportData) {
+                            this.exportArrayToExcel(exportData, this.activeTab.name);
+                            // this.exportTableToExcel("table-character", this.activeTab.name);
+                        }
                     }
                 }
             });
@@ -388,6 +424,32 @@ export default {
             document.body.removeChild(downloadLink);
         },
 
+        exportArrayToExcel(arr, filename = '') {
+            var CsvString = "";
+            console.log(arr);
+            arr.forEach(function(RowItem, RowIndex) {
+                RowItem.forEach(function(ColItem, ColIndex) {
+                CsvString += ColItem + ',';
+                });
+                CsvString += "\r\n";
+            });
+            CsvString = "data:application/csv," + encodeURIComponent(CsvString);
+            var x = document.createElement("A");
+            console.log(CsvString);
+            x.setAttribute("href", CsvString );
+            x.setAttribute("download","somedata.csv");
+            document.body.appendChild(x);
+            x.click();
+
+            /* var lineArray = [];
+            arr.forEach(function (infoArray, index) {
+                var line = infoArray.join(",");
+                lineArray.push(index == 0 ? "data:application/vnd.ms-excel;charset=utf-8," + line : line);
+            });
+            var csvContent = lineArray.join("\n");
+            window.open(encodeURI(csvContent)); */
+        },
+        
         exportTableToExcel(tableID, filename = '') {
             const dataType = 'application/vnd.ms-excel';
             const tableSelect = document.getElementById(tableID);
@@ -409,7 +471,20 @@ export default {
             }
         },
 
+        toggleTab($event, tabID) {
+            this.saveTabText();
+            if ($event.target.innerText !== "x") {
+                this.SET_TAB_ACTIVE(tabID);
+                const textObj = this.texts.find(t => t.tabID==tabID);
+                if (!!textObj) {
+                    this.editor.setText(textObj.text);
+                } else {
+                    this.editor.setText('');
+                }
+            }
+        },
         openFile(file) {
+            this.saveTabText();
             const isEditable = !file.hasOwnProperty('userID');
             if (this.tabs.find(t => t.id==file.id)===undefined) {
                 this.ADD_TAB({
@@ -429,6 +504,7 @@ export default {
             }
         },
         openTable(table) {
+            this.saveTabText();
             if (this.tabs.find(t => t.id==table.id)===undefined) {
                 this.ADD_TAB({
                     id: table.id,
@@ -441,6 +517,7 @@ export default {
             }
         },
         clone() {
+            this.saveTabText();
             const newID = uniqueID();
             const text = this.texts.find(t => t.tabID==this.activeTabID).text;
             this.ADD_TAB({
@@ -448,7 +525,7 @@ export default {
                 type: 'editor',
                 isEditable: true,
                 tableOpen: false,
-                name: this.activeTab.name+'-Copied',
+                name: this.activeTab.name+'-Cloned',
                 active: true
             });
             this.SET_TAB_ACTIVE(newID);
@@ -460,12 +537,12 @@ export default {
         },
         closeTab(tabID) {
             this.CLOSE_TAB(tabID);
-            const textObj = this.texts.find(t => t.id===this.tabs[0].id);
+            const textObj = this.texts.find(t => t.tabID===this.tabs[0].id);
             let text = '';
             if (!!textObj) {
                 text = textObj.text;
             }
-            this.editor.setText('');
+            this.editor.setText(text);
         }
     }
 }

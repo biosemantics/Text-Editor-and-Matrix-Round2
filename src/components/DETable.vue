@@ -73,6 +73,8 @@
 <script>
 import firebase from 'firebase';
 import { mapState, mapMutations, mapActions, mapGetters } from 'vuex';
+import JQuery from 'jquery'
+let $ = JQuery
 export default {
     data: () => ({
         db: null,
@@ -118,6 +120,9 @@ export default {
         ]),
     },
     methods: {
+        ...mapActions([
+            'get_tables',
+        ]),
         addRow() {
             this.data.push({
                 characterName: '',
@@ -135,12 +140,84 @@ export default {
                 this.openedDetailed.splice(this.openedDetailed.indexOf(index), 1);
             }
         },
+        getTableData() {
+            let myTableArray = [];
+            $("#table-character table tr").each(function() {
+                let arrayOfThisRow = [];
+                let tableData = $(this).find('td');
+                if (tableData.length > 0) {
+                    tableData.each(function() { arrayOfThisRow.push($(this).text().trim()); });
+                    myTableArray.push(arrayOfThisRow);
+                }
+            });
+            return myTableArray;            
+        },
+        getExportData() {
+            const app = this;
+            let myTableArray = app.getTableData();
+            let saveData = [];
+            let charaNameFlag = true;
+            let wrongCharacterName = "";
+            myTableArray.forEach(row => {
+                const characterElement = app.data.find(d => d.characterName==row[1]);
+                const src = !!characterElement ? characterElement.text : '';
+                if (row[1].search(/ (between|of) /)===-1) {
+                    charaNameFlag = false;
+                    wrongCharacterName = row[1];
+                }
+                saveData.push([
+                    row[1],
+                    row[2],
+                    src
+                ]);
+            });
+            if (!charaNameFlag) {
+                this.$dialog.alert({
+                    title: 'Character Name Error',
+                    message: '<b>"' + wrongCharacterName + '"</b> is wrong chracter name. Character name should be consisted of connecting two words with "between" or "of".',
+                    type: 'is-danger',
+                    hasIcon: false
+                });
+                return false;
+            }
+            return saveData;
+        },
         saveTable() {
+            const app = this;
             const refID = "users/"+this.user.id+"/table";
             const checkURL = refID+"/"+this.activeTab.id;
+
+            let myTableArray = app.getTableData();
+            let saveData = [];
+            let charaNameFlag = true;
+            let wrongCharacterName = "";
+            myTableArray.forEach(row => {
+                const characterElement = app.data.find(d => d.characterName==row[1]);
+                const src = !!characterElement ? characterElement.text : '';
+                if (row[1].search(/ (between|of) /)==-1) {
+                    charaNameFlag = false;
+                    wrongCharacterName = row[1];
+                }
+                saveData.push({
+                    id: saveData.length,
+                    characterName: row[1],
+                    value: row[2],
+                    text: src
+                });
+            });
+            if (!charaNameFlag) {
+                this.$dialog.alert({
+                    title: 'Character Name Error',
+                    message: '<b>"' + wrongCharacterName + '"</b> is wrong chracter name. Character name should be consisted of connecting two words with "between" or "of".',
+                    type: 'is-danger',
+                    hasIcon: false
+                });
+                return;
+            }
+
             let data = {
                 tabName: this.activeTab.name,
-                data: JSON.stringify(this.data)
+                data: JSON.stringify(saveData)
             };
             this.db.ref(checkURL).once('value', snapshot => {
                 if (snapshot.exists()) {
@@ -148,6 +225,7 @@ export default {
                 } else {
                     this.db.ref(refID).push(data);
                 }
+                this.get_tables();
             });
         }
     }
