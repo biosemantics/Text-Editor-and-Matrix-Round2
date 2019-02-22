@@ -165,11 +165,11 @@ export default {
                     charaNameFlag = false;
                     wrongCharacterName = row[1];
                 }
-                saveData.push([
-                    row[1],
-                    row[2],
-                    src
-                ]);
+                saveData.push({
+                    character: row[1],
+                    value: row[2],
+                    src: src
+                });
             });
             if (!charaNameFlag) {
                 this.$dialog.alert({

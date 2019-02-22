@@ -85,6 +85,7 @@ import ArtBoard  from "./ArtBoard";
 import DETable from "./DETable";
 import API from '@/network/api';
 import { uniqueID } from '@/helpers/helpers';
+import XLSX from 'xlsx';
 
 export default {
     components: {
@@ -124,6 +125,7 @@ export default {
     computed: {
         ...mapState([
             'qterms',
+            'bios',
             'activeTabID',
             'activeTabIndex',
             'replaceArray',
@@ -192,8 +194,16 @@ export default {
                 }
             });
         },
-        formalize() {
-            if (this.activeTab.type === 'table') return;
+        half_resolved() {
+            if (this.qterms.length==0) {
+                this.$dialog.alert({
+                    title: 'Check quality',
+                    message: 'You need to check quality and resolve the terms.',
+                    type: 'is-danger',
+                    hasIcon: false,
+                });
+                return false;
+            }
             const resolvedCount = this.qterms.filter(q => q.resolved).length;
             if (resolvedCount*2 < this.qterms.length) {
                 this.$dialog.alert({
@@ -202,8 +212,14 @@ export default {
                     type: 'is-danger',
                     hasIcon: false,
                 });
-                return;
+                return false;
             }
+            return true;
+        },
+        formalize() {
+            if (this.activeTab.type === 'table') return;
+            if (!this.half_resolved()) return;
+            const resolvedCount = this.qterms.filter(q => q.resolved).length;
             if (resolvedCount < this.qterms.length) {
                 this.$dialog.confirm({
                     title: 'Terms needing more information',
@@ -304,13 +320,23 @@ export default {
             }
         },
         onSave(saveType) {
+            // Validation
             if (this.isEditorEmpty()) {
                 return;
             }
-            const saveText = this.activeTab.type==="table" ? "table" : (saveType==1 ? 'file' : 'template');
+            if (!this.half_resolved()) {
+                return;
+            }
+            // Variables for dialog
+            const saveTitle = 'Save as a '+(this.activeTab.type==="table" ? "table" : (saveType==1 ? 'file' : 'template'));
+            let saveFileName = this.activeTab.name;
+            if (saveType==2) {
+                saveFileName += '.t';
+            }
+            // Show confirm dialog
             this.$dialog.confirm({
-                title: 'Save',
-                message: 'Are you sure to save as a '+ saveText + '?',
+                title: saveTitle,
+                message: 'Are you sure to save as '+ saveFileName + '?',
                 cancelText: 'Cancel',
                 confirmText: 'Save',
                 onCancel: () => {
@@ -323,12 +349,20 @@ export default {
                         const userID = this.user.id;
                         const tabName = this.activeTab.name;
                         const text = this.editor.getText();
+
                         const refID = saveType===1 ? "users/"+userID+"/file" : "template";
-                        let checkURL = "";
-                        const theFile = this.files.find(f => f.tabName == tabName);
-                        if (theFile !== undefined) {
-                            checkURL = refID+"/"+theFile.id;
+                        let checkURL = refID+"/"+this.activeTabID;
+
+                        let storageItem = '';
+                        if (saveType===1) {
+                            storageItem = this.files.find(f => f.tabName == tabName);
+                        } else {
+                            storageItem = this.templates.find(t => t.tabName == tabName);
                         }
+                        if (storageItem !== undefined) {
+                            checkURL = refID+"/"+storageItem.id;
+                        }
+
                         let data = {
                             tabName,
                             text
@@ -339,9 +373,10 @@ export default {
                         this.db.ref(checkURL).once('value', snapshot => {
                             if (snapshot.exists() && saveType===1) {
                                 this.db.ref(checkURL).update(data);
-                                this.CHANGE_TAB_ID(theFile.id);
+                                this.CHANGE_TAB_ID(storageItem.id);
                             } else {
-                                this.db.ref(refID).push(data);
+                                const ret = this.db.ref(refID).push(data);
+                                this.CHANGE_TAB_ID(ret.key);
                             }
                             if (saveType==1) {
                                 this.get_files();
@@ -350,7 +385,6 @@ export default {
                             }
                         });
                     }
-                    // location.reload();
                 }
             });
         },
@@ -358,9 +392,20 @@ export default {
             if (this.isEditorEmpty()) {
                 return;
             }
-            const msg = this.activeTab.name + 'will be exported as '+
-                        this.activeTab.name + (this.activeTab.type === 'editor' ? '.doc?' : '.xls') + 
-                        "to your 'Downloads' folder";
+            if (!this.half_resolved()) {
+                return;
+            }
+            let msg = '';
+            let originTabName = this.activeTab.name;
+            if (this.activeTab.type==='editor') {
+                msg = originTabName + ' will be exported as '+
+                        originTabName +
+                        ".doc to your 'Downloads' folder";
+            } else {
+                originTabName = this.activeTab.name.split('.')[0];
+                msg = 'All characters, values, source sentences will be exported as '+
+                        originTabName + ".xls to your 'Downloads' folder";
+            }
             this.$dialog.confirm({
                 title: 'Export',
                 message: msg,
@@ -371,12 +416,11 @@ export default {
                 },
                 onConfirm: () => {
                     if (this.activeTab.type === 'editor') {
-                        this.export2Doc(this.activeTab.name);
+                        this.export2Doc(originTabName);
                     } else {
                         const exportData = this.$refs.detable.getExportData();
                         if (exportData) {
-                            this.exportArrayToExcel(exportData, this.activeTab.name);
-                            // this.exportTableToExcel("table-character", this.activeTab.name);
+                            this.exportJSONToExcel(exportData, originTabName);
                         }
                     }
                 }
@@ -394,8 +438,17 @@ export default {
             </style>\
             </head><body>";
             const postHtml = "</body></html>";
-            let content = this.editorContent;
-            let html = preHtml+content+postHtml;
+            let text = this.editor.getText();
+            this.bios.forEach(bio => {
+                const bioIndex = text.toLowerCase().indexOf(bio.nameOrigin);
+                const preBioStr = text.substring(0, bioIndex);
+                if (preBioStr.trim().substr(preBioStr.trim().length-1)=='.' || preBioStr.trim()=='') {
+                    const afxBioStr = text.substring(bioIndex+bio.nameOrigin.length);
+                    text = preBioStr+'<b>'+text.substr(bioIndex, bio.nameOrigin.length)+'</b>' + afxBioStr;
+                }
+            });
+
+            let html = preHtml+text+postHtml;
 
             const blob = new Blob(['\ufeff', html], {
                 type: 'application/msword'
@@ -416,52 +469,14 @@ export default {
             }
             document.body.removeChild(downloadLink);
         },
-
-        exportArrayToExcel(arr, filename = '') {
-            var CsvString = "";
-            console.log(arr);
-            arr.forEach(function(RowItem, RowIndex) {
-                RowItem.forEach(function(ColItem, ColIndex) {
-                CsvString += ColItem + ',';
-                });
-                CsvString += "\r\n";
-            });
-            CsvString = "data:application/csv," + encodeURIComponent(CsvString);
-            var x = document.createElement("A");
-            console.log(CsvString);
-            x.setAttribute("href", CsvString );
-            x.setAttribute("download","somedata.csv");
-            document.body.appendChild(x);
-            x.click();
-
-            /* var lineArray = [];
-            arr.forEach(function (infoArray, index) {
-                var line = infoArray.join(",");
-                lineArray.push(index == 0 ? "data:application/vnd.ms-excel;charset=utf-8," + line : line);
-            });
-            var csvContent = lineArray.join("\n");
-            window.open(encodeURI(csvContent)); */
-        },
-        
-        exportTableToExcel(tableID, filename = '') {
-            const dataType = 'application/vnd.ms-excel';
-            const tableSelect = document.getElementById(tableID);
-            const tableHTML = tableSelect.outerHTML.replace(/ /g, '%20');
+        exportJSONToExcel(data, filename = '') {
+            const dataWS = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
 
             filename = filename ? filename+'.xls' : 'excel_data.xls';
-            let downloadLink = document.createElement("a");
-            document.body.appendChild(downloadLink);
+            XLSX.utils.book_append_sheet(wb, dataWS, 'Sheet1');
 
-            if (navigator.msSaveOrOpenBlob) {
-                const blob = new Blob(['\ufeff', tableHTML], {
-                    type: dataType
-                });
-                navigator.msSaveOrOpenBlob( blob, filename);
-            } else {
-                downloadLink.href = 'data:' + dataType + ', ' + tableHTML;
-                downloadLink.download = filename;
-                downloadLink.click();
-            }
+            XLSX.writeFile(wb, filename);
         },
 
         toggleTab($event, tabID) {
