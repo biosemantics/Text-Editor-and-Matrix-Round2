@@ -2,6 +2,7 @@ import Vue from 'vue';
 import Vuex from 'vuex';
 import { parseOntologyId, findAllIndex, getQType, uniqueID } from '@/helpers/helpers';
 import axios from '@/network/axios';
+import firebase from 'firebase';
 
 Vue.use(Vuex);
 
@@ -28,6 +29,9 @@ export const store = new Vuex.Store({
         ontologyDefArray: [],
         treeData: {},
         replaceArray: [],
+        templates: [],
+        files: [],
+        tables: [],
     },
     getters: {
         statementByBioID: (state) => bioID => {
@@ -138,9 +142,16 @@ export const store = new Vuex.Store({
         CHANGE_TAB_NAME(state, newName) {
             state.tabs[state.activeTabIndex].name = newName;
         },
+        CHANGE_TAB_ID(state, newID) {
+            state.tabs[state.activeTabIndex].id = newID;
+        },
         CLOSE_TAB(state, tabID) {
             const tabIndex = state.tabs.findIndex(t => t.id===tabID);
             if (tabIndex > 0) {
+                const textIndex = state.texts.findIndex(t => t.tabID==tabID);
+                if (textIndex > -1) {
+                    state.texts.splice(textIndex, 1);   
+                }
                 state.tabs[0].active = true;
                 state.activeTabIndex = 0;
                 state.activeTabID = state.tabs[0].id;
@@ -304,8 +315,50 @@ export const store = new Vuex.Store({
         },
         get_tree: ({state}) => {
             axios.getTree().then(res => {
+                // console.log('tree data', res.data);
                 state.treeData = res.data;
             });
         },
+        get_files: ({state}) => {
+            state.files = [];
+            const db = firebase.database();
+            const userID = firebase.auth().currentUser.uid;
+            db.ref("users/" + userID + "/file").once('value', function(snapshot) {
+                snapshot.forEach((childSnapshot) => {
+                    const childData = childSnapshot.val();
+                    state.files.push({
+                        id: childSnapshot.key,
+                        ...childData
+                    });
+                });
+            });
+        },
+        get_tables: ({state}) => {
+            state.tables = [];
+            const db = firebase.database();
+            const userID = firebase.auth().currentUser.uid;
+            db.ref("users/" + userID + "/table").once('value', function(snapshot) {
+                snapshot.forEach((childSnapshot) => {
+                    const childData = childSnapshot.val();
+                    state.tables.push({
+                        id: childSnapshot.key,
+                        ...childData
+                    });
+                });
+            });
+        },
+        get_templates: ({state}) => {
+            state.templates = [];
+            const db = firebase.database();
+            db.ref("template").once('value', function(snapshot) {
+                snapshot.forEach((childSnapshot) => {
+                    const childData = childSnapshot.val();
+                    state.templates.push({
+                        id: childSnapshot.key,
+                        ...childData
+                    });
+                });
+            });
+        }
     }
 });
