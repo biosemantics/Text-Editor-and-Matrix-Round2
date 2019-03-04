@@ -149,7 +149,10 @@ export const store = new Vuex.Store({
             const tabIndex = state.tabs.findIndex(t => t.id===tabID);
             if (state.tabs[tabIndex].type=="table") {
                 const tableOriginTabID = state.tabs[tabIndex].originTabID;
-                state.tabs.find(t => t.id==tableOriginTabID).tableOpen = false;
+                const tableOriginTab = state.tabs.find(t => t.id==tableOriginTabID);
+                if (!!tableOriginTab) {
+                    tableOriginTab.tableOpen = false;   
+                }
             }
             if (tabIndex > 0) {
                 const textIndex = state.texts.findIndex(t => t.tabID==tabID);
