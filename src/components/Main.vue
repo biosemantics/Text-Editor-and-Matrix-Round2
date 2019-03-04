@@ -195,7 +195,7 @@ export default {
             });
         },
         half_resolved() {
-            if (this.qterms.length==0) {
+            if (!this.activeTab.parsed && this.qterms.length==0) {
                 this.$dialog.alert({
                     title: 'Check quality',
                     message: 'You need to check quality and resolve the terms.',
@@ -324,7 +324,7 @@ export default {
             if (this.isEditorEmpty()) {
                 return;
             }
-            if (!this.half_resolved()) {
+            if (this.activeTab.type==="editor" && saveType==2 && !this.half_resolved()) {
                 return;
             }
             // Variables for dialog
@@ -390,9 +390,6 @@ export default {
         },
         onExport() {
             if (this.isEditorEmpty()) {
-                return;
-            }
-            if (!this.half_resolved()) {
                 return;
             }
             let msg = '';

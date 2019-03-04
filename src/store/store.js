@@ -147,6 +147,10 @@ export const store = new Vuex.Store({
         },
         CLOSE_TAB(state, tabID) {
             const tabIndex = state.tabs.findIndex(t => t.id===tabID);
+            if (state.tabs[tabIndex].type=="table") {
+                const tableOriginTabID = state.tabs[tabIndex].originTabID;
+                state.tabs.find(t => t.id==tableOriginTabID).tableOpen = false;
+            }
             if (tabIndex > 0) {
                 const textIndex = state.texts.findIndex(t => t.tabID==tabID);
                 if (textIndex > -1) {
