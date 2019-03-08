@@ -217,7 +217,7 @@ export default {
             return true;
         },
         formalize() {
-            if (this.activeTab.type === 'table' || !this.activeTab.isEditable) return;
+            if (this.activeTab.type === 'table' || this.activeTab.isEditable===false) return;
             if (!this.half_resolved()) return;
             const resolvedCount = this.qterms.filter(q => q.resolved).length;
             if (resolvedCount < this.qterms.length) {
