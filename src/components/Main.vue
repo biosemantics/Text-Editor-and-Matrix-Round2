@@ -217,7 +217,7 @@ export default {
             return true;
         },
         formalize() {
-            if (this.activeTab.type === 'table') return;
+            if (this.activeTab.type === 'table' || !this.activeTab.isEditable) return;
             if (!this.half_resolved()) return;
             const resolvedCount = this.qterms.filter(q => q.resolved).length;
             if (resolvedCount < this.qterms.length) {
@@ -488,14 +488,14 @@ export default {
                 }
             }
         },
-        openFile(file) {
+        openFile(file, type) {
             this.saveTabText();
             const isEditable = !file.hasOwnProperty('userID');
             if (this.tabs.find(t => t.id==file.id)===undefined) {
                 this.ADD_TAB({
                     id: file.id,
                     type: 'editor',
-                    name: file.tabName,
+                    name: file.tabName+(type=='template'?'.t':''),
                     tableOpen: false,
                     isEditable: isEditable, 
                     active: true

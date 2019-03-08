@@ -144,6 +144,7 @@ export const store = new Vuex.Store({
         },
         CHANGE_TAB_ID(state, newID) {
             state.tabs[state.activeTabIndex].id = newID;
+            state.activeTabID = newID;
         },
         CLOSE_TAB(state, tabID) {
             const tabIndex = state.tabs.findIndex(t => t.id===tabID);

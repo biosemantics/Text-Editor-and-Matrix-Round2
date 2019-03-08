@@ -88,22 +88,24 @@ export default {
             this.data = JSON.parse(this.activeTab.data);
         } else {
             this.characters.forEach(c => {
-                let characterValue = c.value;
-                let src = this.statements.find(s => s.id == c.src).text;
-                const qi = this.qterms.findIndex(q => q.srcType=="character" && q.value==c.value);
-                if (qi>-1 && this.qterms[qi].resolved) {
-                    const replaced = this.replaceArray.find(r => r.qindex==qi);
-                    if (replaced !== undefined) {
-                        characterValue = replaced.term;
-                        src = src.replace(c.value, characterValue);
+                if (c.tabID == this.activeTab.originTabID) {
+                    let characterValue = c.value;
+                    let src = this.statements.find(s => s.id == c.src).text;
+                    const qi = this.qterms.findIndex(q => q.srcType=="character" && q.value==c.value);
+                    if (qi>-1 && this.qterms[qi].resolved) {
+                        const replaced = this.replaceArray.find(r => r.qindex==qi);
+                        if (replaced !== undefined) {
+                            characterValue = replaced.term;
+                            src = src.replace(c.value, characterValue);
+                        }
                     }
+                    this.data.push({
+                        id: this.data.length,
+                        characterName: c.displayName,
+                        value: characterValue,
+                        text: src
+                    });   
                 }
-                this.data.push({
-                    id: this.data.length,
-                    characterName: c.displayName,
-                    value: characterValue,
-                    text: src
-                });
             });
         }
     },
@@ -113,6 +115,7 @@ export default {
             'statements',
             'qterms',
             'user',
+            'activeTabID',
             'replaceArray'
         ]),
         ...mapGetters([

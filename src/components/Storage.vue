@@ -68,13 +68,13 @@ export default {
             'get_templates'
         ]),
         openTemplate(t) {
-            this.$emit('openTemplate', t);
+            this.$emit('openTemplate', t, 'template');
         },
         openTable(t) {
             this.$emit('openTable', t);
         },
         openFile(f) {
-            this.$emit('openFile', f);
+            this.$emit('openFile', f, 'file');
         }
     }
 }
