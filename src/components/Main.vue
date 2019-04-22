@@ -217,7 +217,15 @@ export default {
             return true;
         },
         formalize() {
-            if (this.activeTab.type === 'table' || this.activeTab.isEditable===false) return;
+            if (this.activeTab.type === 'table' || this.activeTab.isEditable===false) {
+                this.$dialog.alert({
+                    title: 'Check quality',
+                    message: 'Template needs to be cloned into a file after check quality and user can be able to matricize.',
+                    type: 'is-danger',
+                    hasIcon: false,
+                });
+                return;
+            }
             if (!this.half_resolved()) return;
             const resolvedCount = this.qterms.filter(q => q.resolved).length;
             if (resolvedCount < this.qterms.length) {
