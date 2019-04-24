@@ -57,10 +57,17 @@
                                 <label>Select a term from the tree:</label>
                             </div>
                             <div class="column is-8">
-                                <tree 
+                                <input style="width: 100%;" v-model="searchText" />
+                                <br/>
+                                <br/>
+                                <tree
                                     :data="treeData"
-                                    @node:selected="onTreeNodeSelected"
-                                />
+                                    :filter="searchText"
+                                    @node:selected="onTreeNodeSelected">
+                                    <div slot-scope="{ node }" class="node-container">
+                                        <div class="node-text" v-tooltip="node.text">{{ node.text }}</div>
+                                    </div>
+                                </tree>
                             </div>
                         </div>
                     </div>
@@ -155,6 +162,7 @@
 import { mapState, mapGetters, mapMutations } from 'vuex';
 import axios from '@/network/axios';
 
+
 export default {
     name: 'art-board',
     computed: {
@@ -184,7 +192,8 @@ export default {
         },
         intervalHeap: {},
         matchingTermToEdit: '',
-        openEditTermModal: false
+        openEditTermModal: false,
+        searchText: '',
     }),
     methods: {
         ...mapMutations([
@@ -292,6 +301,11 @@ export default {
         },
         checkAllResolved() {
             return this.activeTab.parsed && this.qterms.find(q => !q.resolved)===undefined;
+        },
+        searchTree() {
+            var app = this;
+            console.log('searchText', app.searchText);
+            console.log('treeData', app.treeData);
         }
     }
 }

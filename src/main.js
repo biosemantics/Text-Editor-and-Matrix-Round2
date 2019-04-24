@@ -8,6 +8,7 @@ import router from './router'
 import Buefy from 'buefy'
 import VueResource from "vue-resource"
 import LiquorTree from 'liquor-tree'
+import VTooltip from 'v-tooltip'
 
 import {store} from '@/store/store'
 
@@ -17,6 +18,7 @@ import './styles/style.scss'
 Vue.use(Buefy);
 Vue.use(VueResource);
 Vue.use(LiquorTree);
+Vue.use(VTooltip)
 
 Vue.config.productionTip = false
 let app = '';

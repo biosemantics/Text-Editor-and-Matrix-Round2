@@ -12,12 +12,12 @@
             <div class="column is-8">
                 <div class="tab-header columns detab">
                     <div class="column tabs is-boxed is-10 p0">
-                        <ul>
+                        <ul class="nav nav-tabs">
                             <li v-for="t in tabs" :key="t.id" v-bind:class="{'is-active': t.active}" @click="toggleTab($event, t.id)">
-                                <a>
-                                    <span contenteditable="true" 
+                                <a class="nav-link">
+                                    <span contenteditable="true"
                                         :id="'tab_'+t.id"
-                                        spellcheck="false" 
+                                        spellcheck="false"
                                         v-on:blur="tabNameChanged(t)"
                                         onkeypress="javascript: return event.which != 13;">
                                         {{ t.name }}
