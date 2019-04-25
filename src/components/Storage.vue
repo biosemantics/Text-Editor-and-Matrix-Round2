@@ -10,7 +10,7 @@
                     <label>{{ f.tabName }}</label>
                 </div>
                 <vue-context ref="fileMenu">
-                    <ul slot-scope="child">
+                    <ul slot-scope="child" class="context-ul">
                         <li @click="onRemoveFile($event.target.innerText, child.data)">Remove</li>
                     </ul>
                 </vue-context>
@@ -26,7 +26,7 @@
                     <label>{{ t.tabName }}</label>
                 </div>
                 <vue-context ref="tableMenu">
-                    <ul slot-scope="child">
+                    <ul slot-scope="child" class="context-ul">
                         <li @click="onRemoveTable($event.target.innerText, child.data)">Remove</li>
                     </ul>
                 </vue-context>
@@ -42,7 +42,7 @@
                     <label>{{ t.tabName + '.t' }}</label>
                 </div>
                 <vue-context ref="templateMenu">
-                    <ul slot-scope="child">
+                    <ul slot-scope="child" class="context-ul">
                         <li @click="onRemoveTemplate($event.target.innerText, child.data)">Remove</li>
                     </ul>
                 </vue-context>

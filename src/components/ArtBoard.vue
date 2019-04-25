@@ -99,7 +99,7 @@
                                 <b>{{ getResolvedTerm(i).slice(0, 10) }}...</b>
                             </div>
                         </div>
-                        <button class="btn bk-cyan btn-confirm" @click="qterms[i].showReview = !qterms[i].showReview" v-if="q.qType.type!=='notfound'">
+                        <button class="btn bk-cyan btn-confirm" @click="qterms[i].showReview = !qterms[i].showReview; filteredText = searchText;" v-if="q.qType.type!=='notfound'">
                             {{ qterms[i].showReview ? 'Close' : 'Review' }}
                         </button>
                     </div>
@@ -120,11 +120,11 @@
                                     <label>Select a term from the tree:</label>
                                 </div>
                                 <div class="column is-8">
-                                    <input style="width: 100%;" v-model="searchText" placeholder="Enter a term to filter the term tree"/>
+                                    <input style="width: 100%;" v-model="filteredText" placeholder="Enter a term to filter the term tree"/>
                                     <br/>
                                     <br/>
                                     <tree :data="treeData"
-                                          :filter="searchText"
+                                          :filter="filteredText"
                                     >
                                         <div slot-scope="{ node }" class="node-container">
                                             <div class="node-text" v-tooltip="node.text">{{ node.text }}</div>
@@ -203,6 +203,7 @@ export default {
         matchingTermToEdit: '',
         openEditTermModal: false,
         searchText: '',
+        filteredText: ''
     }),
     methods: {
         ...mapMutations([
