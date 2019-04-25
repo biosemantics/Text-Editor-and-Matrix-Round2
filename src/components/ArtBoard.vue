@@ -57,7 +57,7 @@
                                 <label>Select a term from the tree:</label>
                             </div>
                             <div class="column is-8">
-                                <input style="width: 100%;" v-model="searchText" />
+                                <input style="width: 100%;" v-model="searchText" placeholder="Enter a term to filter the term tree"/>
                                 <br/>
                                 <br/>
                                 <tree
@@ -120,7 +120,16 @@
                                     <label>Select a term from the tree:</label>
                                 </div>
                                 <div class="column is-8">
-                                    <tree :data="treeData"/>
+                                    <input style="width: 100%;" v-model="searchText" placeholder="Enter a term to filter the term tree"/>
+                                    <br/>
+                                    <br/>
+                                    <tree :data="treeData"
+                                          :filter="searchText"
+                                    >
+                                        <div slot-scope="{ node }" class="node-container">
+                                            <div class="node-text" v-tooltip="node.text">{{ node.text }}</div>
+                                        </div>
+                                    </tree>
                                 </div>
                             </div>
                         </div>

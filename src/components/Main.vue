@@ -220,7 +220,7 @@ export default {
             if (this.activeTab.type === 'table' || this.activeTab.isEditable===false) {
                 this.$dialog.alert({
                     title: 'Check quality',
-                    message: 'Template needs to be cloned into a file after check quality and user can be able to matricize.',
+                    message: "Templates can not be matricized directly. Please clone the template into a file, then 'Check Quality', before matricize it.",
                     type: 'is-danger',
                     hasIcon: false,
                 });
