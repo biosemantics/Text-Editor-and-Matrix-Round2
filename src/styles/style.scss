@@ -344,13 +344,25 @@ a, a:hover, a:visited, a:active, a:focus {
             }
         }
     }
-    .tab-item:first-child {
+    //.tab-item:first-child {
+    //    background-color: $cyan-light;
+    //}
+    //.tab-item:nth-of-type(2) {
+    //    background-color: $green-light;
+    //}
+    //.tab-item:last-child {
+    //    background-color: $pink-light;
+    //}
+
+    .tab-item .saved-files {
         background-color: $cyan-light;
     }
-    .tab-item:nth-of-type(2) {
+
+    .tab-item .saved-tables {
         background-color: $green-light;
     }
-    .tab-item:last-child {
+
+    .tab-item .saved-templates {
         background-color: $pink-light;
     }
 }

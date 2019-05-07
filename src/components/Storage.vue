@@ -9,11 +9,11 @@
                     </b-icon>
                     <label>{{ f.tabName }}</label>
                 </div>
-                <!--<vue-context ref="fileMenu">-->
-                    <!--<ul slot-scope="child" class="context-ul">-->
-                        <!--<li @click="onRemoveFile($event.target.innerText, child.data)">Remove</li>-->
-                    <!--</ul>-->
-                <!--</vue-context>-->
+                <vue-context ref="fileMenu">
+                    <ul slot-scope="child" class="context-ul">
+                        <li @click="onRemoveFile($event.target.innerText, child.data)">Remove</li>
+                    </ul>
+                </vue-context>
             </div>
         </b-tab-item>
         <b-tab-item label="Table">
@@ -25,11 +25,11 @@
                     </b-icon>
                     <label>{{ t.tabName }}</label>
                 </div>
-                <!--<vue-context ref="tableMenu">-->
-                    <!--<ul slot-scope="child" class="context-ul">-->
-                        <!--<li @click="onRemoveTable($event.target.innerText, child.data)">Remove</li>-->
-                    <!--</ul>-->
-                <!--</vue-context>-->
+                <vue-context ref="tableMenu">
+                    <ul slot-scope="child" class="context-ul">
+                        <li @click="onRemoveTable($event.target.innerText, child.data)">Remove</li>
+                    </ul>
+                </vue-context>
             </div>
         </b-tab-item>
         <b-tab-item label="Template">
@@ -41,11 +41,11 @@
                     </b-icon>
                     <label>{{ t.tabName + '.t' }}</label>
                 </div>
-                <!--<vue-context ref="templateMenu">-->
-                    <!--<ul slot-scope="child" class="context-ul">-->
-                        <!--<li @click="onRemoveTemplate($event.target.innerText, child.data)">Remove</li>-->
-                    <!--</ul>-->
-                <!--</vue-context>-->
+                <vue-context ref="templateMenu">
+                    <ul slot-scope="child" class="context-ul">
+                        <li @click="onRemoveTemplate($event.target.innerText, child.data)">Remove</li>
+                    </ul>
+                </vue-context>
             </div>
         </b-tab-item>
     </b-tabs>
