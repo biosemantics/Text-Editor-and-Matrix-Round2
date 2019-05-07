@@ -57,9 +57,6 @@ import { mapState, mapActions} from 'vuex';
 import Vue from 'vue';
 import { VueContext } from 'vue-context';
 
-import VueSimpleContextMenu from 'vue-simple-context-menu';
-Vue.component('vue-simple-context-menu', VueSimpleContextMenu);
-
 import firebase from 'firebase';
 
 export default {
