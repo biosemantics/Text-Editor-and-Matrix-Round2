@@ -14,7 +14,7 @@ export const store = new Vuex.Store({
         tabs: [
             {
                 id:0, 
-                name: 'example1', 
+                name: 'new document',
                 parsed: false, 
                 type: 'editor',
                 active: true,

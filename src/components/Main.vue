@@ -15,7 +15,11 @@
                         <ul class="nav nav-tabs">
                             <li v-for="t in tabs" :key="t.id" v-bind:class="{'is-active': t.active}" @click="toggleTab($event, t.id)">
                                 <a class="nav-link">
+                                    <span v-if="t.id == 0">
+                                        {{ t.name }}
+                                    </span>
                                     <span contenteditable="true"
+                                          v-if="t.id != 0"
                                         :id="'tab_'+t.id"
                                         spellcheck="false"
                                         v-on:blur="tabNameChanged(t)"
@@ -296,6 +300,24 @@ export default {
                     originTabID: tab.id,
                     newName
                 });
+            } else {
+                if (this.files.find(f => f.id == this.activeTabID)) {
+                    var updateUrl = 'users/' + this.user.id + '/file/' + this.activeTabID;
+                    console.log('updateFileUrl', updateUrl);
+                    var data = {
+                        tabName: newName
+                    };
+                    this.db.ref(updateUrl).update(data);
+                    this.get_files();
+                } else if (this.templates.find(t => t.id == this.activeTabID)) {
+                    const db = firebase.database();
+                    var currentTemplate = db.ref('template/' + this.activeTabID);
+                    currentTemplate.update({
+                        tabName: newName
+                    });
+                    this.get_templates();
+                }
+
             }
         },
         signout() {
@@ -328,6 +350,7 @@ export default {
             }
         },
         onSave(saveType) {
+            var app = this;
             // Validation
             if (this.isEditorEmpty()) {
                 return;
@@ -337,25 +360,35 @@ export default {
             }
             // Variables for dialog
             const saveTitle = 'Save as a '+(this.activeTab.type==="table" ? "table" : (saveType==1 ? 'file' : 'template'));
-            let saveFileName = this.activeTab.name;
-            if (saveType==2) {
-                saveFileName += '.t';
-            }
+//            let saveFileName = this.activeTab.name;
+//            if (saveType==2) {
+//                saveFileName += '.t';
+//            }
             // Show confirm dialog
             this.$dialog.confirm({
                 title: saveTitle,
-                message: 'Are you sure to save as '+ saveFileName + '?',
+                message: 'Are you sure to save the file as '+ "<input id='confirmFileName'>" + ' ?',
                 cancelText: 'Cancel',
                 confirmText: 'Save',
                 onCancel: () => {
                     return;
                 },
                 onConfirm: () => {
+                    console.log('clicked', $('#confirmFileName').val() + ' ' + saveType);
+                    var saveFileName = $('#confirmFileName').val();
+                    if (saveFileName == '') {
+                        alert('You need to insert the file name.');
+                        return;
+                    }
+                    if (saveType==2) {
+                        saveFileName += '.t';
+                    }
                     if (this.activeTab.type==="table") {
                         this.$refs.detable.saveTable();
                     } else {
                         const userID = this.user.id;
-                        const tabName = this.activeTab.name;
+                        const currentTabName = this.activeTab.name;
+                        const tabName = saveFileName;
                         const text = this.editor.getText();
 
                         const refID = saveType===1 ? "users/"+userID+"/file" : "template";
@@ -363,12 +396,13 @@ export default {
 
                         let storageItem = '';
                         if (saveType===1) {
-                            storageItem = this.files.find(f => f.tabName == tabName);
+                            storageItem = this.files.find(f => f.tabName == currentTabName);
                         } else {
-                            storageItem = this.templates.find(t => t.tabName == tabName);
+                            storageItem = this.templates.find(t => t.tabName == currentTabName);
                         }
                         if (storageItem !== undefined) {
                             checkURL = refID+"/"+storageItem.id;
+                            storageItem.tabName = saveFileName;
                         }
 
                         let data = {
@@ -381,13 +415,26 @@ export default {
                         this.db.ref(checkURL).once('value', snapshot => {
                             if (snapshot.exists() && saveType===1) {
                                 this.db.ref(checkURL).update(data);
+
                                 this.CHANGE_TAB_ID(storageItem.id);
                             } else {
                                 const ret = this.db.ref(refID).push(data);
-                                this.CHANGE_TAB_ID(ret.key);
+                                console.log('ret', ret);
+                                this.editor.setText('');
+//                                this.CHANGE_TAB_ID(ret.key);
                             }
                             if (saveType==1) {
                                 this.get_files();
+                                if (snapshot.exists()) {
+                                    this.activeTab.name = data.tabName;
+//                                    this.CHANGE_TAB_ID(storageItem.id);
+                                } else {
+//                                    var currentItem = this.files.find(f => f.tabName == tabName);
+//                                    console.log('currentItem', this.files);
+//                                    console.log('data.tabName', data.tabName);
+//                                    console.log('currentItem', currentItem);
+//                                    this.openFile(currentItem);
+                                }
                             } else {
                                 this.get_templates();
                             }

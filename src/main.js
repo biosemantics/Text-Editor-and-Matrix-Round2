@@ -9,6 +9,7 @@ import Buefy from 'buefy'
 import VueResource from "vue-resource"
 import LiquorTree from 'liquor-tree'
 import VTooltip from 'v-tooltip'
+window.$ = window.jQuery = require('jquery')
 
 import {store} from '@/store/store'
 
