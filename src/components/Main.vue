@@ -365,83 +365,151 @@ export default {
 //                saveFileName += '.t';
 //            }
             // Show confirm dialog
-            this.$dialog.confirm({
-                title: saveTitle,
-                message: 'Are you sure to save the file as '+ "<input id='confirmFileName'>" + ' ?',
-                cancelText: 'Cancel',
-                confirmText: 'Save',
-                onCancel: () => {
-                    return;
-                },
-                onConfirm: () => {
-                    console.log('clicked', $('#confirmFileName').val() + ' ' + saveType);
-                    var saveFileName = $('#confirmFileName').val();
-                    if (saveFileName == '') {
-                        alert('You need to insert the file name.');
+            if (this.activeTab.name == 'new document') {
+                this.$dialog.confirm({
+                    title: saveTitle,
+                    message: 'Save the ' + (this.activeTab.type==="table" ? "table" : (saveType==1 ? 'file' : 'template')) + ' as '+ "<input id='confirmFileName'>" + ' ?',
+                    cancelText: 'Cancel',
+                    confirmText: 'Save',
+                    onCancel: () => {
                         return;
-                    }
-                    if (saveType==2) {
-                        saveFileName += '.t';
-                    }
-                    if (this.activeTab.type==="table") {
-                        this.$refs.detable.saveTable();
-                    } else {
-                        const userID = this.user.id;
-                        const currentTabName = this.activeTab.name;
-                        const tabName = saveFileName;
-                        const text = this.editor.getText();
-
-                        const refID = saveType===1 ? "users/"+userID+"/file" : "template";
-                        let checkURL = refID+"/"+this.activeTabID;
-
-                        let storageItem = '';
-                        if (saveType===1) {
-                            storageItem = this.files.find(f => f.tabName == currentTabName);
-                        } else {
-                            storageItem = this.templates.find(t => t.tabName == currentTabName);
+                    },
+                    onConfirm: () => {
+                        console.log('clicked', $('#confirmFileName').val() + ' ' + saveType);
+                        var saveFileName = $('#confirmFileName').val();
+                        if (saveFileName == '') {
+                            alert('You need to insert the file name.');
+                            return;
                         }
-                        if (storageItem !== undefined) {
-                            checkURL = refID+"/"+storageItem.id;
-                            storageItem.tabName = saveFileName;
-                        }
-
-                        let data = {
-                            tabName,
-                            text
-                        };
                         if (saveType==2) {
-                            data.userID = userID;
+                            saveFileName += '.t';
                         }
-                        this.db.ref(checkURL).once('value', snapshot => {
-                            if (snapshot.exists() && saveType===1) {
-                                this.db.ref(checkURL).update(data);
+                        if (this.activeTab.type==="table") {
+                            this.$refs.detable.saveTable();
+                        } else {
+                            const userID = this.user.id;
+                            const currentTabName = this.activeTab.name;
+                            const tabName = saveFileName;
+                            const text = this.editor.getText();
 
-                                this.CHANGE_TAB_ID(storageItem.id);
+                            const refID = saveType===1 ? "users/"+userID+"/file" : "template";
+                            let checkURL = refID+"/"+this.activeTabID;
+
+                            let storageItem = '';
+                            if (saveType===1) {
+                                storageItem = this.files.find(f => f.tabName == currentTabName);
                             } else {
-                                const ret = this.db.ref(refID).push(data);
-                                console.log('ret', ret);
-                                this.editor.setText('');
-//                                this.CHANGE_TAB_ID(ret.key);
+                                storageItem = this.templates.find(t => t.tabName == currentTabName);
                             }
-                            if (saveType==1) {
-                                this.get_files();
-                                if (snapshot.exists()) {
-                                    this.activeTab.name = data.tabName;
-//                                    this.CHANGE_TAB_ID(storageItem.id);
+                            if (storageItem !== undefined) {
+                                checkURL = refID+"/"+storageItem.id;
+                                storageItem.tabName = saveFileName;
+                            }
+
+                            let data = {
+                                tabName,
+                                text
+                            };
+                            if (saveType==2) {
+                                data.userID = userID;
+                            }
+                            this.db.ref(checkURL).once('value', snapshot => {
+                                if (snapshot.exists() && saveType===1) {
+                                    this.db.ref(checkURL).update(data);
+
+                                    this.CHANGE_TAB_ID(storageItem.id);
                                 } else {
+                                    const ret = this.db.ref(refID).push(data);
+                                    console.log('ret', ret);
+                                    this.editor.setText('');
+//                                this.CHANGE_TAB_ID(ret.key);
+                                }
+                                if (saveType==1) {
+                                    this.get_files();
+                                    if (snapshot.exists()) {
+                                        this.activeTab.name = data.tabName;
+//                                    this.CHANGE_TAB_ID(storageItem.id);
+                                    } else {
 //                                    var currentItem = this.files.find(f => f.tabName == tabName);
 //                                    console.log('currentItem', this.files);
 //                                    console.log('data.tabName', data.tabName);
 //                                    console.log('currentItem', currentItem);
 //                                    this.openFile(currentItem);
+                                    }
+                                } else {
+                                    this.get_templates();
                                 }
-                            } else {
-                                this.get_templates();
-                            }
-                        });
+                            });
+                        }
                     }
+                });
+            } else {
+                var saveFileName = this.activeTab.name;
+                if (saveFileName == '') {
+                    alert('You need to insert the file name.');
+                    return;
                 }
-            });
+                if (saveType==2) {
+                    saveFileName += '.t';
+                }
+                if (this.activeTab.type==="table") {
+                    this.$refs.detable.saveTable();
+                } else {
+                    const userID = this.user.id;
+                    const tabName = saveFileName;
+                    const text = this.editor.getText();
+
+                    const refID = saveType===1 ? "users/"+userID+"/file" : "template";
+                    let checkURL = refID+"/"+this.activeTabID;
+
+                    let storageItem = '';
+                    if (saveType===1) {
+                        storageItem = this.files.find(f => f.tabName == tabName);
+                    } else {
+                        storageItem = this.templates.find(t => t.tabName == tabName);
+                    }
+                    if (storageItem !== undefined) {
+                        checkURL = refID+"/"+storageItem.id;
+                        storageItem.tabName = saveFileName;
+                    }
+
+                    let data = {
+                        tabName,
+                        text
+                    };
+                    if (saveType==2) {
+                        data.userID = userID;
+                    }
+                    this.db.ref(checkURL).once('value', snapshot => {
+                        if (snapshot.exists() && saveType===1) {
+                            this.db.ref(checkURL).update(data);
+
+                            this.CHANGE_TAB_ID(storageItem.id);
+                        } else {
+                            const ret = this.db.ref(refID).push(data);
+                            console.log('ret', ret);
+                            this.editor.setText('');
+//                                this.CHANGE_TAB_ID(ret.key);
+                        }
+                        if (saveType==1) {
+                            this.get_files();
+                            if (snapshot.exists()) {
+                                this.activeTab.name = data.tabName;
+//                                    this.CHANGE_TAB_ID(storageItem.id);
+                            } else {
+//                                    var currentItem = this.files.find(f => f.tabName == tabName);
+//                                    console.log('currentItem', this.files);
+//                                    console.log('data.tabName', data.tabName);
+//                                    console.log('currentItem', currentItem);
+//                                    this.openFile(currentItem);
+                            }
+                        } else {
+                            this.get_templates();
+                        }
+                    });
+                }
+            }
+
         },
         onExport() {
             if (this.isEditorEmpty()) {
