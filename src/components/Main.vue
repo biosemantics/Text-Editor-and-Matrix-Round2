@@ -449,9 +449,9 @@ export default {
                     alert('You need to insert the file name.');
                     return;
                 }
-                if (saveType==2) {
-                    saveFileName += '.t';
-                }
+//                if (saveType==2) {
+//                    saveFileName += '.t';
+//                }
                 if (this.activeTab.type==="table") {
                     this.$refs.detable.saveTable();
                 } else {
@@ -481,10 +481,14 @@ export default {
                         data.userID = userID;
                     }
                     this.db.ref(checkURL).once('value', snapshot => {
-                        if (snapshot.exists() && saveType===1) {
-                            this.db.ref(checkURL).update(data);
+                        if (snapshot.exists()) {
+                            if (saveType===1) {
+                                this.db.ref(checkURL).update(data);
 
-                            this.CHANGE_TAB_ID(storageItem.id);
+                                this.CHANGE_TAB_ID(storageItem.id);
+                            } else if (saveType == 2) {
+                                this.db.ref(checkURL).update(data);
+                            }
                         } else {
                             const ret = this.db.ref(refID).push(data);
                             console.log('ret', ret);

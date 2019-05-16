@@ -116,7 +116,8 @@ export default {
             'qterms',
             'user',
             'activeTabID',
-            'replaceArray'
+            'replaceArray',
+            'tables'
         ]),
         ...mapGetters([
             'activeTab',
@@ -226,7 +227,8 @@ export default {
                 if (snapshot.exists()) {
                     this.db.ref(checkURL).update(data);
                 } else {
-                    this.db.ref(refID).push(data);
+                    var returnTable = this.db.ref(refID).push(data);
+                    this.activeTab.id = returnTable.key;
                 }
                 this.get_tables();
             });
